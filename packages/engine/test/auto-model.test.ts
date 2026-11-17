@@ -11,10 +11,13 @@ import {
 import { CODING_PLANS, planModel } from "@agenteschat/providers/plans";
 import fixture from "../../providers/test/fixtures/openrouter-models.json";
 import {
+  type AutoPolicy,
   agentBrainLines,
   answerQuestion,
+  antigravityModelForTier,
   autoApplied,
   autoModelFor,
+  autoPolicyOf,
   autoWanted,
   type BrainPlan,
   brainModelForTier,
@@ -25,13 +28,17 @@ import {
   createCredential,
   createFakeJudge,
   drainOutbox,
+  fallbackChoice,
   getAgent,
+  getOrgSettings,
   isBrainEffortSetting,
   type Judge,
   NEW_AGENT_DEFAULTS,
   needsAutoChoice,
   normalizeBrainModel,
+  orgAutoPolicy,
   postPersonMessage,
+  SUGGESTED_AUTO_POLICY,
   updateAgent,
   updateOrgSettings,
   ValidationError,
@@ -110,6 +117,98 @@ describe("chooseAutoModel", () => {
     expect(await chooseAutoModel(broken, input)).toMatchObject({ tier: "medium", effort: "medium", source: "error" });
     const odd = createFakeJudge((_kind, id) => (id === "tier" ? "huge" : "low"));
     expect(await chooseAutoModel(odd, input)).toMatchObject({ tier: "medium", effort: "medium", source: "error" });
+  });
+});
+
+describe("a workspace's policy: the kind of work gives the tier and effort (ADR 0189)", () => {
+  const policy: AutoPolicy = SUGGESTED_AUTO_POLICY;
+
+  test("the judge answers one question, the kind of work, and the policy maps it", async () => {
+    const judge = createFakeJudge((kind, id) => (kind === "auto_model" && id === "activity" ? "execute" : undefined));
+    const choice = await chooseAutoModel(judge, { ...input, policy });
+    expect(choice).toMatchObject({ tier: "small", effort: "high", activity: "execute", source: "judge" });
+    expect(choice.reason).toBe("Carrying out decided work (100%): small tier, high effort, by the workspace's policy.");
+    expect(judge.calls).toHaveLength(1);
+    expect(Object.keys(judge.calls[0]?.questions ?? {})).toEqual(["activity"]);
+    const { activity } = judge.calls[0]?.questions ?? {};
+    expect(Object.keys((activity as { criteria: Record<string, string> }).criteria)).toEqual([
+      "think",
+      "talk",
+      "execute",
+    ]);
+    for (const [kind, want] of [
+      ["think", { tier: "large", effort: "low" }],
+      ["talk", { tier: "medium", effort: "medium" }],
+    ] as const) {
+      const j = createFakeJudge(() => kind);
+      expect(await chooseAutoModel(j, { ...input, policy })).toMatchObject({ ...want, activity: kind });
+    }
+  });
+
+  test("a timeout, a failure or an answer off the list takes the policy's conversation line", async () => {
+    const custom: AutoPolicy = { ...policy, talk: { tier: "small", effort: "low" } };
+    const slow: Judge = { name: "slow", ask: () => new Promise(() => {}) };
+    expect(await chooseAutoModel(slow, { ...input, policy: custom, timeoutMs: 5 })).toMatchObject({
+      tier: "small",
+      effort: "low",
+      activity: "talk",
+      source: "timeout",
+    });
+    const broken: Judge = {
+      name: "broken",
+      ask: async () => {
+        throw new Error("down");
+      },
+    };
+    expect(await chooseAutoModel(broken, { ...input, policy: custom })).toMatchObject({
+      tier: "small",
+      effort: "low",
+      source: "error",
+    });
+    const odd = createFakeJudge(() => "dance");
+    expect(await chooseAutoModel(odd, { ...input, policy: custom })).toMatchObject({ tier: "small", source: "error" });
+    expect(fallbackChoice("none", custom)).toMatchObject({ tier: "small", effort: "low", activity: "talk" });
+    expect(fallbackChoice("none")).toMatchObject({ tier: "medium", effort: "medium" });
+  });
+
+  test("a policy is read only whole: every kind with a tier and an effort, nothing else", () => {
+    expect(autoPolicyOf(policy)).toEqual(policy);
+    expect(autoPolicyOf(null)).toBeNull();
+    expect(autoPolicyOf({ think: policy.think, talk: policy.talk })).toBeNull();
+    expect(autoPolicyOf({ ...policy, extra: policy.talk })).toBeNull();
+    expect(autoPolicyOf({ ...policy, execute: { tier: "huge", effort: "high" } })).toBeNull();
+    expect(autoPolicyOf({ ...policy, execute: { tier: "small", effort: "max" } })).toBeNull();
+    expect(autoPolicyOf({ ...policy, execute: { tier: "small" } })).toBeNull();
+    expect(autoPolicyOf({ ...policy, execute: { tier: "small", effort: "low", more: 1 } })).toBeNull();
+    expect(autoPolicyOf([])).toBeNull();
+  });
+
+  test("Antigravity's slug carries the thinking level: the tier's Gemini model at the effort, else the nearest level", () => {
+    expect(antigravityModelForTier("large", "high")).toBe("gemini-4-argon-high");
+    expect(antigravityModelForTier("large", "low")).toBe("gemini-4-argon-medium");
+    expect(antigravityModelForTier("small", "high")).toBe("gemini-3.8-flash-high");
+    expect(antigravityModelForTier("medium", "low")).toBe("gemini-3.8-flash-low");
+    expect(brainModelForTier("antigravity", "large", "low")).toBe("gemini-4-argon-medium");
+    expect(brainModelForTier("antigravity", "small", "high")).toBe("gemini-3.8-flash-high");
+    expect(antigravityModelForTier("large", "high", [])).toBeUndefined();
+  });
+
+  test("the policy is saved with the settings, read back whole, cleared with null and refused when partial", async () => {
+    f = await setup({});
+    expect((await getOrgSettings(f.db, f.owner.id, f.org.id)).autoPolicy).toBeNull();
+    const saved = await updateOrgSettings(f.db, f.owner.id, f.org.id, { autoPolicy: policy });
+    expect(saved.autoPolicy).toEqual(policy);
+    expect(await orgAutoPolicy(f.db, f.org.id)).toEqual(policy);
+    const other = { ...policy, think: { tier: "medium", effort: "high" } } as AutoPolicy;
+    await updateOrgSettings(f.db, f.owner.id, f.org.id, { autoPolicy: other });
+    expect(await orgAutoPolicy(f.db, f.org.id)).toEqual(other);
+    await expect(
+      updateOrgSettings(f.db, f.owner.id, f.org.id, { autoPolicy: { think: policy.think } as unknown as AutoPolicy }),
+    ).rejects.toThrow("autoPolicy must give think, talk and execute a tier and an effort");
+    expect((await getOrgSettings(f.db, f.owner.id, f.org.id)).autoPolicy).toEqual(other);
+    const cleared = await updateOrgSettings(f.db, f.owner.id, f.org.id, { autoPolicy: null });
+    expect(cleared.autoPolicy).toBeNull();
+    expect(await orgAutoPolicy(f.db, f.org.id)).toBeNull();
   });
 });
 
@@ -429,6 +528,27 @@ describe("a run of an agent on Automático", () => {
     });
     await drainOutbox(f.db, f.handlers);
     expect(f.provider.calls.at(-1)?.request.model).toBe("claude-haiku-5-5");
+  });
+
+  test("under the workspace's policy the judge reads the kind of work, and the run records it", async () => {
+    f = await setup({
+      judge: (kind, id) => (kind === "auto_model" && id === "activity" ? "think" : undefined),
+      reply: () => ({ chunks: ["Plano pronto."] }),
+    });
+    await updateOrgSettings(f.db, f.owner.id, f.org.id, { autoPolicy: SUGGESTED_AUTO_POLICY });
+    await updateAgent(f.db, f.owner.id, f.org.id, f.agent.id, { model: AUTO_MODEL });
+    await postPersonMessage({ db: f.db, pubsub: f.pubsub }, f.owner.id, f.org.id, f.general.id, {
+      body: "@dev revisa a arquitetura da cobrança",
+    });
+    await drainOutbox(f.db, f.handlers);
+    expect(f.provider.calls[0]?.request).toMatchObject({ model: "claude-opus-5-5", effort: "low" });
+    const steps = await f.db.select().from(schema.agentRunSteps).where(eq(schema.agentRunSteps.kind, "context"));
+    expect(steps.find((s) => s.data.autoModel)?.data.autoModel).toMatchObject({
+      tier: "large",
+      effort: "low",
+      activity: "think",
+      source: "judge",
+    });
   });
 
   test("the judge fails: the run still answers, on the medium tier with medium effort, and says why", async () => {

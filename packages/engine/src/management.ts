@@ -5,7 +5,7 @@ import { getAgent } from "./agents";
 import { decidableBySql } from "./approvals";
 import { audienceSql, listsAllAgents } from "./audience";
 import { recordAudit } from "./audit";
-import type { AutoModels } from "./auto-model";
+import { type AutoModels, type AutoPolicy, autoPolicyOf } from "./auto-model";
 import { caches } from "./cache";
 import {
   announceChannelLeavers,
@@ -85,6 +85,8 @@ export interface OrgSettings extends MediaSettings {
   voiceMessages: boolean;
   /** Per provider, the models "Automático" picks per tier where the workspace chose its own (ADR 0087). */
   autoModels: AutoModels;
+  /** "Automático" by the kind of work (ADR 0189): tier and effort of think, talk and execute; null: the judge picks both. */
+  autoPolicy: AutoPolicy | null;
   /** Who the workspace is for (ADR 0159): `team` or `personal`. */
   mode: WorkspaceMode;
   /** The right hand watches for what stops the team and tells who can fix it. On by default. */
@@ -116,6 +118,7 @@ export async function getOrgSettings(db: Database, actorId: string, orgId: strin
     actionCheck: s?.actionCheck ?? true,
     voiceMessages: s?.voiceMessages ?? true,
     autoModels: (s?.autoModels ?? {}) as AutoModels,
+    autoPolicy: autoPolicyOf(s?.autoPolicy),
     mode: isWorkspaceMode(s?.mode) ? s.mode : "team",
     teamWatch: s?.teamWatch ?? true,
     welcomePeople: s?.welcomePeople ?? true,
@@ -138,10 +141,12 @@ export async function updateOrgSettings(
   db: Database,
   actorId: string,
   orgId: string,
-  input: Partial<Omit<OrgSettings, "defaultCredentialIds" | "autoModels" | "approvalsLevel">> & {
+  input: Partial<Omit<OrgSettings, "defaultCredentialIds" | "autoModels" | "autoPolicy" | "approvalsLevel">> & {
     defaultCredentialIds?: Partial<Record<string, string | null>>;
     /** Per provider and tier, a model of that provider; null puts the tier back on the default. */
     autoModels?: Partial<Record<string, Partial<Record<ModelTier, string | null>>>>;
+    /** Tier and effort per kind of work (ADR 0189); null goes back to the judge picking both. */
+    autoPolicy?: AutoPolicy | null;
   },
 ): Promise<OrgSettings> {
   await requirePermission(db, actorId, orgId, "configure");
@@ -161,6 +166,8 @@ export async function updateOrgSettings(
         throw new ValidationError(`autoModels.${provider}.${tier} must be one of ${provider}'s models`);
     }
   }
+  if (input.autoPolicy != null && !autoPolicyOf(input.autoPolicy))
+    throw new ValidationError("autoPolicy must give think, talk and execute a tier and an effort");
   if (input.teamSize && !TEAM_SIZES.includes(input.teamSize)) throw new ValidationError("invalid teamSize");
   if (input.mode !== undefined && !isWorkspaceMode(input.mode))
     throw new ValidationError(`mode must be one of ${WORKSPACE_MODES.join(", ")}`);
@@ -254,6 +261,7 @@ export async function updateOrgSettings(
       ...(input.mode !== undefined ? { mode: input.mode } : {}),
       ...(input.teamWatch !== undefined ? { teamWatch: input.teamWatch } : {}),
       ...(input.welcomePeople !== undefined ? { welcomePeople: input.welcomePeople } : {}),
+      ...(input.autoPolicy !== undefined ? { autoPolicy: input.autoPolicy } : {}),
       ...(input.autoModels !== undefined
         ? { autoModels: mergeAutoModels(await storedAutoModels(), input.autoModels) }
         : {}),
@@ -280,6 +288,7 @@ export async function updateOrgSettings(
   if (input.defaultAgentBudgetNanoUsd !== undefined) await resumeBudgetWaits(db, orgId, null);
   caches.orgs.delete(`${orgId}:action-check`);
   caches.orgs.delete(`${orgId}:auto-models`);
+  caches.orgs.delete(`${orgId}:auto-policy`);
   caches.orgs.delete(mediaSettingsCacheKey(orgId));
   caches.orgs.delete(workspaceModeCacheKey(orgId));
   caches.zones.deletePrefix(`${orgId}:`);

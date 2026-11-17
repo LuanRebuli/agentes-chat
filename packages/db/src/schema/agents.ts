@@ -374,6 +374,11 @@ export const organizationSettings = pgTable("organization_settings", {
    * (`{ openrouter: { small, medium, large } }`); a tier left out is the provider's default (ADR 0087).
    */
   autoModels: jsonb().$type<Partial<Record<string, Partial<Record<string, string>>>>>().notNull().default({}),
+  /**
+   * "Automático" by the kind of work (ADR 0189): `{ think, talk, execute }`, each `{ tier, effort }`. The judge reads
+   * only the kind; the tier and effort come from here. Null: the judge picks both, as before.
+   */
+  autoPolicy: jsonb().$type<Record<string, { tier: string; effort: string }>>(),
   /** People can send GIFs in chat (ADR 0091): needs the server's `GIPHY_API_KEY` too. */
   gifs: boolean().notNull().default(true),
   /** The most a GIF may be rated: `g` (any age) or `pg` (ADR 0091). */

@@ -61,6 +61,7 @@ import {
   inMission,
   needsAutoChoice,
   orgAutoModels,
+  orgAutoPolicy,
   withAuto,
 } from "./auto-model";
 import type { BlockSpecReader } from "./block-state";
@@ -1828,9 +1829,10 @@ async function executeRunInner(
   // choice is applied once the brain is known, before the first model call. Never blocks: no answer in time
   // is medium/medium.
   const askAuto = (): Promise<AutoChoice> => {
-    if (!judge) return Promise.resolve(fallbackChoice("none"));
-    return Promise.all([recentMessages(), inMission(db, run).catch(() => false)])
-      .then(([recent, mission]) =>
+    const policyRead = orgAutoPolicy(db, run.orgId).catch(() => null);
+    if (!judge) return policyRead.then((policy) => fallbackChoice("none", policy));
+    return Promise.all([recentMessages(), inMission(db, run).catch(() => false), policyRead])
+      .then(([recent, mission, policy]) =>
         chooseAutoModel(judge, {
           orgId: run.orgId,
           agentId: agent.id,
@@ -1844,6 +1846,7 @@ async function executeRunInner(
           mission,
           computer: brainOf(agent.brain) !== "model",
           tools: granted.length > 0,
+          policy,
         }),
       )
       .catch(() => fallbackChoice("error"));
@@ -3047,6 +3050,7 @@ async function executeRunInner(
         effort: applied.effort ?? null,
         brain: brainPlan.kind,
         model: (brainPlan.kind === "model" ? thinker.model : brainPlan.model) ?? null,
+        ...(choice.activity ? { activity: choice.activity } : {}),
         reason: choice.reason,
         source: choice.source,
       };

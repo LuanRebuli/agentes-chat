@@ -2,12 +2,14 @@ import { and, type Database, desc, type Executor, eq, isNull, schema } from "@ag
 import {
   endpointModelId,
   isAutoModel,
+  MODEL_CATALOG,
   MODEL_TIERS,
   type ModelTier,
   modelForTier,
   modelInfo,
   parseCustomModel,
 } from "@agenteschat/providers";
+import { ANTIGRAVITY_MODELS, antigravityBaseModel } from "@agenteschat/providers/plans";
 import type { Agent } from "./agents";
 import { agentBrainSummaries, brainOf, CLAUDE_CODE_MODELS } from "./brain-settings";
 import type { BrainPlan } from "./brains/select";
@@ -43,6 +45,8 @@ export const AUTO_MODEL_TIMEOUT_MS = 1500;
 export interface AutoChoice {
   tier: ModelTier;
   effort: AutoEffort;
+  /** Under a workspace's policy (ADR 0189): the kind of work the judge read, which gave the tier and effort. */
+  activity?: AutoActivity;
   /** One line, for the run's `context` step. */
   reason: string;
   /** "judge", or why it is medium/medium ("timeout", "error", "none": no judge, "kept": resumed without one). */
@@ -54,16 +58,99 @@ export interface AutoModelRecord extends AutoChoice {
   apiModel?: string;
 }
 
-/** What a run that couldn't ask thinks with: the everyday model, ordinary effort. */
-export function fallbackChoice(source: Exclude<AutoChoice["source"], "judge">): AutoChoice {
+/**
+ * What a run that couldn't ask thinks with: the everyday model, ordinary effort; under a workspace's policy, what it
+ * gives conversation (`talk`), its everyday line.
+ */
+export function fallbackChoice(source: Exclude<AutoChoice["source"], "judge">, policy?: AutoPolicy | null): AutoChoice {
   const why: Record<typeof source, string> = {
     timeout: "The judge didn't answer in time",
     error: "The judge failed",
     none: "No judge on this server",
     kept: "Resumed without a choice",
   };
+  if (policy) {
+    const { tier, effort } = policy.talk;
+    return {
+      tier,
+      effort,
+      activity: "talk",
+      reason: `${why[source]}: the policy's conversation line, ${tier} tier, ${effort} effort.`,
+      source,
+    };
+  }
   return { tier: "medium", effort: "medium", reason: `${why[source]}: medium tier, medium effort.`, source };
 }
+
+// ── A workspace's policy: the kind of work picks the tier and effort (ADR 0189) ─────────────────────────────
+
+/** The kinds of work a policy tells apart: deciding or reviewing, conversation, carrying out what was decided. */
+export const AUTO_ACTIVITIES = ["think", "talk", "execute"] as const;
+export type AutoActivity = (typeof AUTO_ACTIVITIES)[number];
+export interface AutoStep {
+  tier: ModelTier;
+  effort: AutoEffort;
+}
+/** Per kind of work, the tier and effort; the judge only reads which kind a run is. */
+export type AutoPolicy = Record<AutoActivity, AutoStep>;
+
+/**
+ * The policy offered to start from: the large model thinking briefly for decisions and reviews, the everyday one for
+ * conversation, the small one thinking hard for work already decided (a small model does well on a clear plan when
+ * it checks its work).
+ */
+export const SUGGESTED_AUTO_POLICY: AutoPolicy = {
+  think: { tier: "large", effort: "low" },
+  talk: { tier: "medium", effort: "medium" },
+  execute: { tier: "small", effort: "high" },
+};
+
+const isStep = (v: unknown): v is AutoStep =>
+  typeof v === "object" &&
+  v !== null &&
+  Object.keys(v).length === 2 &&
+  MODEL_TIERS.includes((v as AutoStep).tier) &&
+  AUTO_EFFORTS.includes((v as AutoStep).effort);
+
+/** A stored or sent policy read back: every kind with a tier and an effort, nothing else; null otherwise. */
+export function autoPolicyOf(v: unknown): AutoPolicy | null {
+  if (typeof v !== "object" || v === null || Array.isArray(v)) return null;
+  const keys = Object.keys(v);
+  if (keys.length !== AUTO_ACTIVITIES.length || !AUTO_ACTIVITIES.every((a) => keys.includes(a))) return null;
+  const p = v as Record<AutoActivity, unknown>;
+  if (!AUTO_ACTIVITIES.every((a) => isStep(p[a]))) return null;
+  const steps = p as AutoPolicy;
+  return {
+    think: { tier: steps.think.tier, effort: steps.think.effort },
+    talk: { tier: steps.talk.tier, effort: steps.talk.effort },
+    execute: { tier: steps.execute.tier, effort: steps.execute.effort },
+  };
+}
+
+/** The workspace's policy (`organization_settings.auto_policy`), cached; null: the judge picks tier and effort. */
+export async function orgAutoPolicy(db: Executor, orgId: string): Promise<AutoPolicy | null> {
+  return (await caches.orgs.getOrLoad(`${orgId}:auto-policy`, async () => {
+    const [row] = await db
+      .select({ autoPolicy: schema.organizationSettings.autoPolicy })
+      .from(schema.organizationSettings)
+      .where(eq(schema.organizationSettings.orgId, orgId));
+    return autoPolicyOf(row?.autoPolicy);
+  })) as AutoPolicy | null;
+}
+
+const ACTIVITY_CRITERIA: Record<AutoActivity, string> = {
+  think:
+    "Deciding or judging: planning, architecture, design direction, choosing between options, reviewing code or someone's work, finding the cause of a subtle bug, anything where a wrong call is costly.",
+  talk: "Conversation and coordination: answering, explaining, summarizing, asking or handing work to a teammate, a quick look-up with a tool.",
+  execute:
+    "Carrying out work already decided: implementing a planned change or a mission's item, editing files, running commands and tests, filling in a page, repeating steps from a clear plan.",
+};
+
+const ACTIVITY_REASON: Record<AutoActivity, string> = {
+  think: "deciding or reviewing",
+  talk: "conversation",
+  execute: "carrying out decided work",
+};
 
 /** Never the small tier: with a long tool list, the smallest models miss tools they have and give up on the task. */
 const ACTING =
@@ -114,9 +201,12 @@ export async function chooseAutoModel(
     computer: boolean;
     /** It has tools beyond the conversation. */
     tools: boolean;
+    /** The workspace's policy (ADR 0189): the judge reads the kind of work only, the policy gives the rest. */
+    policy?: AutoPolicy | null;
     timeoutMs?: number;
   },
 ): Promise<AutoChoice> {
+  const policy = input.policy ?? null;
   const about =
     "An AI agent of a team (`agent`) is about to work on `message` (`recent` is what was said before it; `run` says whether a routine started it in the background, whether it is part of a mission, whether it works on a computer with files and a shell, and whether it has tools). Missions and code work usually need more; greetings and quick questions the least.";
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -145,22 +235,38 @@ export async function chooseAutoModel(
             has_tools: input.tools,
           },
         },
-        questions: {
-          tier: {
-            type: "choice",
-            instructions: `${about} How capable a model does this task need?`,
-            criteria: TIER_CRITERIA,
-          },
-          effort: {
-            type: "choice",
-            instructions: `${about} How hard should it think before and while answering?`,
-            criteria: EFFORT_CRITERIA,
-          },
-        },
+        questions: policy
+          ? {
+              activity: {
+                type: "choice",
+                instructions: `${about} What kind of work is this turn?`,
+                criteria: ACTIVITY_CRITERIA,
+              },
+            }
+          : {
+              tier: {
+                type: "choice",
+                instructions: `${about} How capable a model does this task need?`,
+                criteria: TIER_CRITERIA,
+              },
+              effort: {
+                type: "choice",
+                instructions: `${about} How hard should it think before and while answering?`,
+                criteria: EFFORT_CRITERIA,
+              },
+            },
       }),
       timeout,
     ]);
-    if (answers === "timeout") return fallbackChoice("timeout");
+    if (answers === "timeout") return fallbackChoice("timeout", policy);
+    if (policy) {
+      const activity = answers.activity?.choice as AutoActivity | undefined;
+      if (!activity || !AUTO_ACTIVITIES.includes(activity)) return fallbackChoice("error", policy);
+      const { tier, effort } = policy[activity];
+      const p = percent(answers.activity?.probabilities?.[activity]);
+      const reason = `${ACTIVITY_REASON[activity]}${p}: ${tier} tier, ${effort} effort, by the workspace's policy.`;
+      return { tier, effort, activity, reason: reason.charAt(0).toUpperCase() + reason.slice(1), source: "judge" };
+    }
     const tier = answers.tier?.choice as ModelTier | undefined;
     const effort = answers.effort?.choice as AutoEffort | undefined;
     if (!tier || !MODEL_TIERS.includes(tier) || !effort || !AUTO_EFFORTS.includes(effort)) {
@@ -171,7 +277,7 @@ export async function chooseAutoModel(
     const reason = `${TIER_REASON[tier]}${tierP}; ${effort} effort${effortP}.`;
     return { tier, effort, reason: reason.charAt(0).toUpperCase() + reason.slice(1), source: "judge" };
   } catch {
-    return fallbackChoice("error");
+    return fallbackChoice("error", policy);
   } finally {
     clearTimeout(timer);
   }
@@ -194,13 +300,43 @@ export const autoWanted = (agent: AutoAgent) =>
 export const needsAutoChoice = (agent: AutoAgent, plan: Pick<BrainPlan, "kind" | "model">) =>
   isAutoModel(agent.model) || isAutoModel(plan.model) || autoEffortFor(agent, plan.kind);
 
-/** A computer brain's model for a tier: Claude Code's alias (`haiku`, `sonnet`, `opus`), a Codex model. */
-export function brainModelForTier(kind: BrainKind, tier: ModelTier): string | undefined {
+/**
+ * A computer brain's model for a tier: Claude Code's alias (`haiku`, `sonnet`, `opus`), a Codex model, an Antigravity
+ * slug (a Gemini model at a thinking level, so it takes the effort too: `antigravityModelForTier`).
+ */
+export function brainModelForTier(kind: BrainKind, tier: ModelTier, effort?: AutoEffort): string | undefined {
   if (kind === "claude_code") {
     const id = modelForTier("anthropic", tier);
     return CLAUDE_CODE_MODELS.find((o) => o.modelId === id)?.value ?? "sonnet";
   }
   if (kind === "codex") return modelForTier("openai", tier) ?? undefined;
+  if (kind === "antigravity") return antigravityModelForTier(tier, effort);
+  return undefined;
+}
+
+/**
+ * The Antigravity slug for a tier and effort (ADR 0189): a Gemini model of that tier, else the nearest larger one,
+ * else the nearest smaller one; then that model at the effort, else its nearest level (medium before the other).
+ * Undefined only when none of the listed slugs is a catalog model.
+ */
+export function antigravityModelForTier(
+  tier: ModelTier,
+  effort: AutoEffort = "medium",
+  models: readonly { id: string }[] = ANTIGRAVITY_MODELS,
+): string | undefined {
+  const rank = MODEL_TIERS.indexOf(tier);
+  const order = [...MODEL_TIERS.slice(rank), ...MODEL_TIERS.slice(0, rank).reverse()];
+  const levels: AutoEffort[] = [effort, ...(["medium", "high", "low"] as const).filter((e) => e !== effort)];
+  for (const t of order) {
+    const slugs = models.map((m) => m.id).filter((id) => MODEL_CATALOG[antigravityBaseModel(id)]?.tier === t);
+    const first = slugs[0];
+    if (!first) continue;
+    const base = antigravityBaseModel(first);
+    for (const level of levels) {
+      if (slugs.includes(`${base}-${level}`)) return `${base}-${level}`;
+    }
+    return first;
+  }
   return undefined;
 }
 
@@ -288,7 +424,7 @@ export function autoApplied(
     return out;
   }
   if (isAutoModel(plan.model)) {
-    const model = brainModelForTier(plan.kind, choice.tier);
+    const model = brainModelForTier(plan.kind, choice.tier, choice.effort);
     if (model) out.brainModel = model;
   }
   if (autoEffortFor(agent, plan.kind)) out.effort = choice.effort;

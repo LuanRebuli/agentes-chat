@@ -2492,6 +2492,8 @@ export interface OrgSettings {
   actionCheck: boolean;
   /** Per provider, the models Automático picks per tier where the workspace chose its own (ADR 0087). */
   autoModels: Partial<Record<string, Partial<Record<ModelTier, string>>>>;
+  /** Automático by the kind of work (ADR 0189): tier and effort of think, talk and execute; null: the judge picks both. */
+  autoPolicy: AutoPolicy | null;
   /** People can send GIFs in chat (ADR 0091); only with `gifsAvailable` too. On by default. */
   gifs: boolean;
   /** The most a GIF may be rated. */
@@ -2519,6 +2521,13 @@ export interface OrgSettings {
 }
 
 /** `OrgSettings` the server works out itself, or sets through its own call: never in a PATCH. */
+export type AutoActivity = "think" | "talk" | "execute";
+export interface AutoPolicyStep {
+  tier: ModelTier;
+  effort: "low" | "medium" | "high";
+}
+export type AutoPolicy = Record<AutoActivity, AutoPolicyStep>;
+
 export type ReadOnlyOrgSettings = "gifsAvailable" | "agentMediaAvailable" | "voiceAvailable" | "approvalsLevel";
 
 /** Automático's sizes: quick tasks, everyday work, hard work. */

@@ -22,6 +22,7 @@ const SETTINGS: OrgSettings = {
   timezone: "UTC",
   actionCheck: true,
   autoModels: {},
+  autoPolicy: null,
   gifs: true,
   gifRating: "g",
   agentStickers: true,

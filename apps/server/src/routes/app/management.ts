@@ -180,6 +180,10 @@ const IssuesView = z
       "How you look at Tarefas in one workspace: `board` or `list`, grouped by `stage`, `assignee` or `priority`, in `manual` order (the board's), by `priority`, by `due` date or by the last change (`updated`), what the cards show (`fields`), the assignee filter (`agent:<id>`, `person:<id>`, `none`), the priority filter and the label filter (empty: every task), which finished tasks show (`all`, `recent`: changed in the last 7 days, `hidden`), whether canceled tasks show, whether groups with no task show (`hideEmpty`), the groups folded shut (`collapsed`: column ids, assignee keys or priorities), and the widths given to the list's columns in pixels (`widths`: `title` and the card fields; only the ones changed, each between its column's least and most).",
   });
 
+/** Tier and effort per kind of work (ADR 0189): the three kinds, each with both, nothing else. */
+const AutoPolicyStep = z.strictObject({ tier: ModelTier, effort: z.enum(["low", "medium", "high"]) });
+const AutoPolicySchema = z.strictObject({ think: AutoPolicyStep, talk: AutoPolicyStep, execute: AutoPolicyStep });
+
 const Settings = z
   .object({
     name: z.string(),
@@ -207,6 +211,10 @@ const Settings = z
     autoModels: z.record(z.string(), z.partialRecord(ModelTier, z.string())).openapi({
       description:
         "Per provider, the models Automático picks per tier where the workspace chose its own (`{ openrouter: { small, medium, large } }`, ADR 0087); a tier left out is the provider's default.",
+    }),
+    autoPolicy: AutoPolicySchema.nullable().openapi({
+      description:
+        "Automático by the kind of work (ADR 0189): the tier and effort of think, talk and execute. Null: the judge picks both.",
     }),
     gifs: z.boolean().openapi({
       description: "People can send GIFs in chat (ADR 0091); they also need `gifsAvailable`. On by default.",
@@ -660,6 +668,9 @@ export function managementRoutes(deps: AppDeps) {
             autoModels: z.partialRecord(ProviderId, z.partialRecord(ModelTier, ModelId.nullable())).optional().openapi({
               description:
                 "Per provider and tier, one of that provider's models; null puts the tier back on its default.",
+            }),
+            autoPolicy: AutoPolicySchema.nullable().optional().openapi({
+              description: "Tier and effort per kind of work (ADR 0189); null puts the judge back on picking both.",
             }),
             voiceMessages: z
               .boolean()
