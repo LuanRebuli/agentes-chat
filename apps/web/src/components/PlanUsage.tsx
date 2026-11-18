@@ -334,7 +334,8 @@ function AccountRow({
             className="ac-planmeter__state plan-row__alert"
             data-level={planLevel(line.top?.used ?? 0, line.state === "limited")}
           >
-            {line.alert}
+            {/* Each window's bar says when it renews: near the limit the warning keeps just its words. */}
+            {line.state === "limited" ? line.alert : text.almost}
           </span>
         )}
       </button>
