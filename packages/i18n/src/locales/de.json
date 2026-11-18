@@ -12577,7 +12577,13 @@
     "folderDeleted_one": "Ordner gelöscht. {{count}} Datei ist im Papierkorb.",
     "folderDeleted_other": "Ordner gelöscht. {{count}} Dateien sind im Papierkorb.",
     "folderDeletedKept_one": "Ordner gelöscht. {{count}} Datei, die du nicht löschen darfst, ist eine Ebene höher gerückt.",
-    "folderDeletedKept_other": "Ordner gelöscht. {{count}} Dateien, die du nicht löschen darfst, sind eine Ebene höher gerückt."
+    "folderDeletedKept_other": "Ordner gelöscht. {{count}} Dateien, die du nicht löschen darfst, sind eine Ebene höher gerückt.",
+    "delete": "Löschen",
+    "deleteItemsTitle_one": "{{count}} Element löschen?",
+    "deleteItemsTitle_other": "{{count}} Elemente löschen?",
+    "deleteItemsBody": "Ordner werden mit allem darin gelöscht. Dateien, die du löschen darfst, kommen für 30 Tage in den Papierkorb. Dateien anderer Personen rücken eine Ebene nach oben.",
+    "itemsDeleted_one": "{{count}} Element gelöscht.",
+    "itemsDeleted_other": "{{count}} Elemente gelöscht."
   },
   "storage": {
     "title": "Speicher",

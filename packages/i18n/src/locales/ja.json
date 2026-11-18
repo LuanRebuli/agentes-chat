@@ -12052,7 +12052,11 @@
     "deleteFolderBody": "中のフォルダも削除されます。削除できるファイルは30日間ゴミ箱に入ります。ほかの人のファイルは、このフォルダがあった場所に移ります。",
     "folderDeletedEmpty": "フォルダを削除しました。",
     "folderDeleted_other": "フォルダを削除しました。{{count}} 件のファイルがゴミ箱に入りました。",
-    "folderDeletedKept_other": "フォルダを削除しました。削除できない {{count}} 件のファイルは1つ上の階層に移りました。"
+    "folderDeletedKept_other": "フォルダを削除しました。削除できない {{count}} 件のファイルは1つ上の階層に移りました。",
+    "delete": "削除",
+    "deleteItemsTitle_other": "{{count}} 件を削除しますか？",
+    "deleteItemsBody": "フォルダは中身ごと削除されます。削除できるファイルは 30 日間ゴミ箱に入ります。ほかの人のファイルは 1 つ上の階層に移動します。",
+    "itemsDeleted_other": "{{count}} 件を削除しました。"
   },
   "storage": {
     "title": "ストレージ",

@@ -13091,7 +13091,15 @@
     "folderDeleted_other": "Cartella eliminata. {{count}} file sono andati nel cestino.",
     "folderDeletedKept_one": "Cartella eliminata. {{count}} file che non puoi eliminare è salito di un livello.",
     "folderDeletedKept_many": "Cartella eliminata. {{count}} file che non puoi eliminare sono saliti di un livello.",
-    "folderDeletedKept_other": "Cartella eliminata. {{count}} file che non puoi eliminare sono saliti di un livello."
+    "folderDeletedKept_other": "Cartella eliminata. {{count}} file che non puoi eliminare sono saliti di un livello.",
+    "delete": "Elimina",
+    "deleteItemsTitle_one": "Eliminare {{count}} elemento?",
+    "deleteItemsTitle_many": "Eliminare {{count}} elementi?",
+    "deleteItemsTitle_other": "Eliminare {{count}} elementi?",
+    "deleteItemsBody": "Le cartelle vengono eliminate con tutto ciò che contengono. I file che puoi eliminare vanno nel cestino per 30 giorni. Quelli degli altri salgono di un livello.",
+    "itemsDeleted_one": "{{count}} elemento eliminato.",
+    "itemsDeleted_many": "{{count}} elementi eliminati.",
+    "itemsDeleted_other": "{{count}} elementi eliminati."
   },
   "storage": {
     "title": "Archiviazione",

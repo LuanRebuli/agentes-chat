@@ -12985,6 +12985,13 @@ export const ptBR = {
     folderDeleted_other: "Pasta excluída. {{count}} arquivos foram para a lixeira.",
     folderDeletedKept_one: "Pasta excluída. {{count}} arquivo que você não pode excluir subiu um nível.",
     folderDeletedKept_other: "Pasta excluída. {{count}} arquivos que você não pode excluir subiram um nível.",
+    delete: "Excluir",
+    deleteItemsTitle_one: "Excluir {{count}} item?",
+    deleteItemsTitle_other: "Excluir {{count}} itens?",
+    deleteItemsBody:
+      "As pastas vão com tudo o que têm dentro. Os arquivos que você pode excluir vão para a lixeira por 30 dias. Os de outras pessoas sobem um nível.",
+    itemsDeleted_one: "{{count}} item excluído.",
+    itemsDeleted_other: "{{count}} itens excluídos.",
   },
   storage: {
     title: "Armazenamento",

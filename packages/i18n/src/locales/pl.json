@@ -13574,7 +13574,17 @@
     "folderDeletedKept_one": "Folder usunięty. {{count}} plik, którego nie możesz usunąć, przeszedł poziom wyżej.",
     "folderDeletedKept_few": "Folder usunięty. {{count}} pliki, których nie możesz usunąć, przeszły poziom wyżej.",
     "folderDeletedKept_many": "Folder usunięty. {{count}} plików, których nie możesz usunąć, przeszło poziom wyżej.",
-    "folderDeletedKept_other": "Folder usunięty. {{count}} pliku, których nie możesz usunąć, przeszło poziom wyżej."
+    "folderDeletedKept_other": "Folder usunięty. {{count}} pliku, których nie możesz usunąć, przeszło poziom wyżej.",
+    "delete": "Usuń",
+    "deleteItemsTitle_one": "Usunąć {{count}} element?",
+    "deleteItemsTitle_few": "Usunąć {{count}} elementy?",
+    "deleteItemsTitle_many": "Usunąć {{count}} elementów?",
+    "deleteItemsTitle_other": "Usunąć {{count}} elementu?",
+    "deleteItemsBody": "Foldery znikają razem z całą zawartością. Pliki, które możesz usunąć, trafiają do kosza na 30 dni. Pliki innych osób przechodzą poziom wyżej.",
+    "itemsDeleted_one": "Usunięto {{count}} element.",
+    "itemsDeleted_few": "Usunięto {{count}} elementy.",
+    "itemsDeleted_many": "Usunięto {{count}} elementów.",
+    "itemsDeleted_other": "Usunięto {{count}} elementu."
   },
   "storage": {
     "title": "Miejsce na dane",

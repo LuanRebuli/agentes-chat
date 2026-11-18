@@ -12105,7 +12105,11 @@
     "deleteFolderBody": "Folder di dalamnya juga ikut terhapus. File yang bisa kamu hapus masuk ke sampah selama 30 hari. File milik orang lain naik ke tempat folder ini berada.",
     "folderDeletedEmpty": "Folder dihapus.",
     "folderDeleted_other": "Folder dihapus. {{count}} file masuk ke sampah.",
-    "folderDeletedKept_other": "Folder dihapus. {{count}} file yang tidak bisa kamu hapus naik satu tingkat."
+    "folderDeletedKept_other": "Folder dihapus. {{count}} file yang tidak bisa kamu hapus naik satu tingkat.",
+    "delete": "Hapus",
+    "deleteItemsTitle_other": "Hapus {{count}} item?",
+    "deleteItemsBody": "Folder dihapus beserta semua isinya. File yang boleh Anda hapus masuk ke sampah selama 30 hari. File milik orang lain naik satu tingkat.",
+    "itemsDeleted_other": "{{count}} item dihapus."
   },
   "storage": {
     "title": "Penyimpanan",

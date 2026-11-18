@@ -11120,6 +11120,59 @@ html:not([data-pointer]) .ac-optrow[data-state="checked"]:focus-visible {
 .ac-optlist--locked .ac-optrow[data-state="checked"]:hover {
   box-shadow: var(--optrow-chosen);
 }
+/* List: plain compact rows, 2 apart as menu rows, no border; hover and the chosen one are a quiet fill. */
+.ac-optlist--list {
+  gap: 2px;
+}
+.ac-optlist--list .ac-optrow,
+.ac-optlist--list .ac-optrow--lead {
+  min-height: var(--control-h-md);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  box-shadow: none;
+}
+.ac-optlist--list .ac-optrow:hover {
+  background: color-mix(in srgb, var(--sunken) 70%, transparent);
+  box-shadow: none;
+}
+.ac-optlist--list .ac-optrow:active {
+  transform: none;
+}
+.ac-optlist--list .ac-optrow[data-state="checked"],
+.ac-optlist--locked.ac-optlist--list .ac-optrow[data-state="checked"]:hover {
+  --optrow-chosen: none;
+  background: var(--chosen-bg);
+  box-shadow: none;
+  transform: none;
+}
+html:not([data-pointer]) .ac-optlist--list .ac-optrow:focus-visible {
+  box-shadow: var(--field-ring);
+}
+.ac-optlist--list .ac-optrow__title {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.ac-optlist--list .ac-optrow__lead {
+  color: var(--muted);
+}
+.ac-optlist--list .ac-optrow[data-state="checked"] .ac-optrow__title {
+  font-weight: 650;
+}
+.ac-optlist--list .ac-optrow--lead[data-state="unchecked"] .ac-optrow__lead {
+  opacity: 1;
+  filter: none;
+}
+/* A tree level: 16 per level, its hairline under the middle of the parent's 16 icon, through the row's padding and
+   the 2 between rows (the row's 12 gap is taken back, so levels step by 16, not 28). */
+.ac-optrow__guide {
+  flex: none;
+  align-self: stretch;
+  width: var(--space-4);
+  margin-block: calc(-1 * var(--space-2) - 1px);
+  margin-inline-end: calc(-1 * var(--space-3));
+  background: linear-gradient(var(--line2), var(--line2)) center / 1px 100% no-repeat;
+}
 /*
  * Attached: the chosen row and its settings are one card. The row on top, a hairline, then the settings
  * full width from the card's edge. The card's border is the chosen one's.

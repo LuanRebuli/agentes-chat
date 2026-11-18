@@ -12649,7 +12649,13 @@
     "folderDeleted_one": "Map verwijderd. {{count}} bestand ging naar de prullenbak.",
     "folderDeleted_other": "Map verwijderd. {{count}} bestanden gingen naar de prullenbak.",
     "folderDeletedKept_one": "Map verwijderd. {{count}} bestand dat je niet mag verwijderen ging een niveau omhoog.",
-    "folderDeletedKept_other": "Map verwijderd. {{count}} bestanden die je niet mag verwijderen gingen een niveau omhoog."
+    "folderDeletedKept_other": "Map verwijderd. {{count}} bestanden die je niet mag verwijderen gingen een niveau omhoog.",
+    "delete": "Verwijderen",
+    "deleteItemsTitle_one": "{{count}} item verwijderen?",
+    "deleteItemsTitle_other": "{{count}} items verwijderen?",
+    "deleteItemsBody": "Mappen gaan weg met alles erin. Bestanden die je mag verwijderen gaan 30 dagen naar de prullenbak. Bestanden van anderen gaan een niveau omhoog.",
+    "itemsDeleted_one": "{{count}} item verwijderd.",
+    "itemsDeleted_other": "{{count}} items verwijderd."
   },
   "storage": {
     "title": "Opslag",

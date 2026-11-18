@@ -12996,7 +12996,15 @@
     "folderDeleted_other": "Carpeta eliminada. {{count}} archivos fueron a la papelera.",
     "folderDeletedKept_one": "Carpeta eliminada. {{count}} archivo que no puedes eliminar subió un nivel.",
     "folderDeletedKept_many": "Carpeta eliminada. {{count}} archivos que no puedes eliminar subieron un nivel.",
-    "folderDeletedKept_other": "Carpeta eliminada. {{count}} archivos que no puedes eliminar subieron un nivel."
+    "folderDeletedKept_other": "Carpeta eliminada. {{count}} archivos que no puedes eliminar subieron un nivel.",
+    "delete": "Eliminar",
+    "deleteItemsTitle_one": "¿Eliminar {{count}} elemento?",
+    "deleteItemsTitle_many": "¿Eliminar {{count}} elementos?",
+    "deleteItemsTitle_other": "¿Eliminar {{count}} elementos?",
+    "deleteItemsBody": "Las carpetas se eliminan con todo lo que contienen. Los archivos que puedes eliminar van a la papelera durante 30 días. Los de otras personas suben un nivel.",
+    "itemsDeleted_one": "{{count}} elemento eliminado.",
+    "itemsDeleted_many": "{{count}} elementos eliminados.",
+    "itemsDeleted_other": "{{count}} elementos eliminados."
   },
   "storage": {
     "title": "Almacenamiento",

@@ -30806,6 +30806,24 @@
       "other": "Folder deleted. {{count}} files you can't delete moved up a level."
     }
   },
+  "drive.delete": {
+    "value": "Delete"
+  },
+  "drive.deleteItemsTitle": {
+    "value": {
+      "one": "Delete {{count}} item?",
+      "other": "Delete {{count}} items?"
+    }
+  },
+  "drive.deleteItemsBody": {
+    "value": "Folders go with everything inside them. Files you can delete go to the trash for 30 days. Anyone else's files move up a level."
+  },
+  "drive.itemsDeleted": {
+    "value": {
+      "one": "{{count}} item deleted.",
+      "other": "{{count}} items deleted."
+    }
+  },
   "storage.title": {
     "value": "Storage"
   },

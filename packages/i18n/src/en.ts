@@ -12993,6 +12993,14 @@ export const en = {
     folderDeleted_other: "Folder deleted. {{count}} files went to the trash.",
     folderDeletedKept_one: "Folder deleted. {{count}} file you can't delete moved up a level.",
     folderDeletedKept_other: "Folder deleted. {{count}} files you can't delete moved up a level.",
+    /** A selection of folders and files: its menu, the selection bar and their one confirmation. */
+    delete: "Delete",
+    deleteItemsTitle_one: "Delete {{count}} item?",
+    deleteItemsTitle_other: "Delete {{count}} items?",
+    deleteItemsBody:
+      "Folders go with everything inside them. Files you can delete go to the trash for 30 days. Anyone else's files move up a level.",
+    itemsDeleted_one: "{{count}} item deleted.",
+    itemsDeleted_other: "{{count}} items deleted.",
   },
   storage: {
     title: "Storage",

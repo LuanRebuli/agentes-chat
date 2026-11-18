@@ -12125,7 +12125,11 @@
     "deleteFolderBody": "其中的文件夹也会一并删除。你可以删除的文件会进入回收站保留 30 天。其他人的文件会移到此文件夹原来的位置。",
     "folderDeletedEmpty": "文件夹已删除。",
     "folderDeleted_other": "文件夹已删除。{{count}} 个文件已进入回收站。",
-    "folderDeletedKept_other": "文件夹已删除。{{count}} 个你无法删除的文件已移到上一级。"
+    "folderDeletedKept_other": "文件夹已删除。{{count}} 个你无法删除的文件已移到上一级。",
+    "delete": "删除",
+    "deleteItemsTitle_other": "删除 {{count}} 项？",
+    "deleteItemsBody": "文件夹会连同其中的所有内容一起删除。你可以删除的文件会在回收站保留 30 天。其他人的文件会上移一级。",
+    "itemsDeleted_other": "已删除 {{count}} 项。"
   },
   "storage": {
     "title": "存储",

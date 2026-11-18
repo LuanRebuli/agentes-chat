@@ -13071,7 +13071,15 @@
     "folderDeleted_other": "Dossier supprimé. {{count}} fichiers sont allés dans la corbeille.",
     "folderDeletedKept_one": "Dossier supprimé. {{count}} fichier que vous ne pouvez pas supprimer est remonté d’un niveau.",
     "folderDeletedKept_many": "Dossier supprimé. {{count}} fichiers que vous ne pouvez pas supprimer sont remontés d’un niveau.",
-    "folderDeletedKept_other": "Dossier supprimé. {{count}} fichiers que vous ne pouvez pas supprimer sont remontés d’un niveau."
+    "folderDeletedKept_other": "Dossier supprimé. {{count}} fichiers que vous ne pouvez pas supprimer sont remontés d’un niveau.",
+    "delete": "Supprimer",
+    "deleteItemsTitle_one": "Supprimer {{count}} élément ?",
+    "deleteItemsTitle_many": "Supprimer {{count}} éléments ?",
+    "deleteItemsTitle_other": "Supprimer {{count}} éléments ?",
+    "deleteItemsBody": "Les dossiers partent avec tout leur contenu. Les fichiers que vous pouvez supprimer vont dans la corbeille pendant 30 jours. Ceux des autres remontent d’un niveau.",
+    "itemsDeleted_one": "{{count}} élément supprimé.",
+    "itemsDeleted_many": "{{count}} éléments supprimés.",
+    "itemsDeleted_other": "{{count}} éléments supprimés."
   },
   "storage": {
     "title": "Stockage",

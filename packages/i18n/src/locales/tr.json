@@ -12516,7 +12516,13 @@
     "folderDeleted_one": "Klasör silindi. {{count}} dosya çöp kutusuna gitti.",
     "folderDeleted_other": "Klasör silindi. {{count}} dosya çöp kutusuna gitti.",
     "folderDeletedKept_one": "Klasör silindi. Silemediğiniz {{count}} dosya bir üst düzeye taşındı.",
-    "folderDeletedKept_other": "Klasör silindi. Silemediğiniz {{count}} dosya bir üst düzeye taşındı."
+    "folderDeletedKept_other": "Klasör silindi. Silemediğiniz {{count}} dosya bir üst düzeye taşındı.",
+    "delete": "Sil",
+    "deleteItemsTitle_one": "{{count}} öğe silinsin mi?",
+    "deleteItemsTitle_other": "{{count}} öğe silinsin mi?",
+    "deleteItemsBody": "Klasörler içindeki her şeyle birlikte silinir. Silebileceğin dosyalar 30 gün çöp kutusunda kalır. Başkalarının dosyaları bir üst seviyeye taşınır.",
+    "itemsDeleted_one": "{{count}} öğe silindi.",
+    "itemsDeleted_other": "{{count}} öğe silindi."
   },
   "storage": {
     "title": "Depolama",
