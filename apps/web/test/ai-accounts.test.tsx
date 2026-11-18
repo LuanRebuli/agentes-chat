@@ -108,8 +108,8 @@ describe("IA e uso: the viewer's own accounts", () => {
     expect(head.textContent).toContain("Trabalho\u2002Team\u2002de Walter");
     expect(head.querySelector(".ac-planmeter__line")?.textContent).toBe("5h 84%");
     expect(within(head).getAllByRole("meter")).toHaveLength(1);
-    // Near its limit: what matters then on one line under them. The row still starts closed.
-    expect(head.querySelector(".plan-row__alert")?.textContent).toMatch(/^Quase no limite · renova /);
+    // Near its limit: just the words; each window's bar says when it renews. The row still starts closed.
+    expect(head.querySelector(".plan-row__alert")?.textContent).toBe("Quase no limite");
     expect(head.getAttribute("aria-expanded")).toBe("false");
     await opened(work);
     // The logo names the maker: the address waits in Detalhes with the computer.
