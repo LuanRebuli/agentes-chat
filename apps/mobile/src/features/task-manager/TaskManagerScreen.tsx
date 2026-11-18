@@ -13,6 +13,8 @@ import {
   type AgentTasks,
   agentSummary,
   causeWords,
+  computerRoomText,
+  computersBesides,
   endedState,
   endedText,
   groupLead,
@@ -168,6 +170,8 @@ function TaskManager() {
   const delegatedCount = delegated.reduce((n, g) => n + g.tasks.length, 0);
   const computers = view?.computers ?? [];
   const causes = shownCauses(all);
+  // A computer with a line holds work too (each turn waits its place): a row of the same block, opening its line.
+  const lined = computersBesides(computers, causes).filter((m) => m.inLine > 0);
   return (
     <PushedLargeTitle
       title={t("taskManager.title")}
@@ -185,11 +189,14 @@ function TaskManager() {
             <Text variant="subhead" tone="muted" style={styles.summary}>
               {summary}
             </Text>
-            {causes.length > 0 ? (
+            {causes.length + lined.length > 0 ? (
               <Animated.View {...fade} layout={layout}>
-                <SectionHeader title={t("taskManager.capacity.label")} count={causes.length} />
+                <SectionHeader title={t("taskManager.capacity.label")} count={causes.length + lined.length} />
                 {causes.map((cause, i) => (
                   <CauseRow key={cause.key} cause={cause} computers={computers} divider={i > 0} />
+                ))}
+                {lined.map((m, i) => (
+                  <ComputerRow key={m.id} computer={m} divider={causes.length + i > 0} />
                 ))}
               </Animated.View>
             ) : null}
@@ -451,12 +458,11 @@ function OneLine({ title, line, variant = "body" }: { title: string; line?: stri
 
 /**
  * What holds waiting work (`waitCauses`), one line with its count, as the web's strip: a plan at its limit opens IA e
- * uso, a full computer its line, one away the computers, people's oks and answers the first such task's screen.
+ * uso, one away the computers, people's oks and answers the first such task's screen.
  */
 function CauseRow({ cause, computers, divider }: { cause: WaitCause; computers: ComputerSummary[]; divider: boolean }) {
   const { t, i18n } = useTranslation();
   const c = useColors();
-  const openQueue = useOpenQueue();
   const first = cause.tasks[0] as ManagedTask;
   const { name: title, fact: line } = causeWords(t, i18n.language, cause, computers);
   const brain = first.brain && first.brain !== "model" ? first.brain : null;
@@ -470,7 +476,7 @@ function CauseRow({ cause, computers, divider }: { cause: WaitCause; computers: 
       : cause.kind === "computer"
         ? {
             lead: <ComputerIcon kind={kind} size={16} color={c.muted} />,
-            onPress: cause.busy ? () => openQueue(cause.machineId) : () => router.push("/settings/devices"),
+            onPress: () => router.push("/settings/devices"),
           }
         : {
             lead: <Icon name="clock" size={16} color={c.muted} />,
@@ -487,6 +493,31 @@ function CauseRow({ cause, computers, divider }: { cause: WaitCause; computers: 
       {divider ? <View style={[styles.divider, styles.textDivider, { backgroundColor: c.line2 }]} /> : null}
       <Tile size={LEAD}>{row.lead}</Tile>
       <OneLine title={title} line={line} variant="subhead" />
+      <Disclosure />
+    </RowPressable>
+  );
+}
+
+/** A computer with a line (ADR 0128): its name, how many wait and run there. It opens its line (`QueueSheet`). */
+function ComputerRow({ computer, divider }: { computer: ComputerSummary; divider: boolean }) {
+  const { t } = useTranslation();
+  const c = useColors();
+  const kind = useComputerKind(useOrgId(), computer.id);
+  const openQueue = useOpenQueue();
+  const line = computerRoomText(t, computer);
+  return (
+    <RowPressable
+      hold
+      onPress={() => openQueue(computer.id)}
+      accessibilityRole="button"
+      accessibilityLabel={`${computer.name}, ${line}`}
+      style={styles.task}
+    >
+      {divider ? <View style={[styles.divider, styles.textDivider, { backgroundColor: c.line2 }]} /> : null}
+      <Tile size={LEAD}>
+        <ComputerIcon kind={kind} size={16} color={c.muted} />
+      </Tile>
+      <OneLine title={computer.name} line={line} variant="subhead" />
       <Disclosure />
     </RowPressable>
   );

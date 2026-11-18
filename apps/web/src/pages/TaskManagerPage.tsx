@@ -9,6 +9,8 @@ import {
   agentCardLine,
   agentSummary,
   causeWords,
+  computerRoomText,
+  computersBesides,
   delegationText,
   endedState,
   endedText,
@@ -159,6 +161,8 @@ export function TaskManagerPage({
   // The computers with turns running or waiting for room (ADR 0128).
   const computers = view.data?.computers ?? [];
   const causes = shownCauses(all);
+  // A computer with a line holds work too (each turn waits its place): a row of the same block, with Ver fila.
+  const lined = computersBesides(computers, causes).filter((c) => c.inLine > 0);
   const nameOf = (id: string) => dir.anyAgent(id)?.name ?? t("channel.unknownAgent");
   const query = q.trim().toLocaleLowerCase();
   const matches = (task: ManagedTask) => {
@@ -397,7 +401,7 @@ export function TaskManagerPage({
         }
       />
 
-      {view.data && <CapacityStrip causes={causes} computers={computers} onQueue={setQueueOf} />}
+      {view.data && <CapacityStrip causes={causes} lined={lined} computers={computers} onQueue={setQueueOf} />}
 
       {view.isLoading && <LoadingList count={4} avatar={false} />}
       {view.isError && !view.data && <ErrorState error={view.error} onRetry={() => void view.refetch()} />}
@@ -623,10 +627,13 @@ export function TaskManagerPage({
  */
 function CapacityStrip({
   causes,
+  lined,
   computers,
   onQueue,
 }: {
   causes: WaitCause[];
+  /** Computers with a line that aren't a cause already. */
+  lined: ComputerSummary[];
   computers: ComputerSummary[];
   onQueue: (machineId: string) => void;
 }) {
@@ -634,7 +641,7 @@ function CapacityStrip({
   const { org } = useOrg();
   const navigate = useNavigate();
   const openTask = useOpenTask();
-  if (causes.length === 0) return null;
+  if (causes.length + lined.length === 0) return null;
   const row = (cause: WaitCause) => {
     const first = cause.tasks[0] as ManagedTask;
     const words = causeWords(t, i18n.language, cause, computers);
@@ -652,25 +659,29 @@ function CapacityStrip({
       return {
         ...words,
         lead: <Icon name="computer" size={18} />,
-        act: cause.busy ? t("queue.see") : t("taskManager.capacity.computers"),
-        onAct: cause.busy
-          ? () => onQueue(cause.machineId)
-          : () =>
-              void navigate({
-                to: "/org/$orgId/settings/$section",
-                params: { orgId: org.id, section: "computers" },
-              }),
+        act: t("taskManager.capacity.computers"),
+        onAct: () =>
+          void navigate({ to: "/org/$orgId/settings/$section", params: { orgId: org.id, section: "computers" } }),
       };
     return { ...words, lead: <WaitMark />, act: t("taskManager.actions.open"), onAct: () => openTask(first) };
   };
   return (
     <section className="tm-causes" aria-label={t("taskManager.capacity.label")}>
-      <GroupHeading title={t("taskManager.capacity.label")} count={causes.length} />
+      <GroupHeading title={t("taskManager.capacity.label")} count={causes.length + lined.length} />
       <ul className="tm-computers__list ac-card">
-        {causes.map((cause) => {
-          const r = row(cause);
+        {[
+          ...causes.map((cause) => ({ key: cause.key, ...row(cause) })),
+          ...lined.map((c) => ({
+            key: c.id,
+            name: c.name,
+            fact: computerRoomText(t, c),
+            lead: <Icon name="computer" size={18} />,
+            act: t("queue.see"),
+            onAct: () => onQueue(c.id),
+          })),
+        ].map((r) => {
           return (
-            <li key={cause.key} className="tm-computer tm-cause">
+            <li key={r.key} className="tm-computer tm-cause">
               <span className="tm-computer__icon" aria-hidden="true">
                 {r.lead}
               </span>

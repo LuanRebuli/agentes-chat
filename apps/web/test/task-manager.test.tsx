@@ -887,10 +887,10 @@ describe("the task manager page", () => {
     expect(tipOf(agentRowOf(NOVA_NAME, asked()))).toMatch(/^1 tarefa\. Trabalhando\. Claude Code · Terminal · bun/);
     const refund = rows.find((r) => r.textContent?.includes("reembolso em dobro")) as HTMLElement;
     expect(tipOf(refund)).toBe(`${NOVA_NAME} · #atendimento-internacional-e-cobrancas. ${LONG_NAME} parou · 6 min`);
-    // What holds the work, each cause on one line, its words whole in its tip.
+    // What holds the work, each cause on one line, its words whole in its tip; a computer with a line among them.
     const held = [...document.querySelectorAll(".tm-causes .tm-computer__text")].map((r) => r.textContent);
     expect(held[0]).toBe("2 esperam vocêSegue quando alguém aprovar");
-    expect(held[1]).toMatch(/^Pausada: plano a 95% da semanaVolta .+ · 1 tarefa$/);
+    expect(held).toContain("MacBook Pro da equipe de atendimento internacional3 na fila · 2 trabalhando");
     // The keys' focus on the long row: its words whole in the tip, the command it runs too.
     await act(async () => {
       fireEvent.keyDown(document.body, { key: "Tab" });
@@ -1154,34 +1154,23 @@ describe("an agent's tasks beside its DM", () => {
 });
 
 describe("a computer's line", () => {
-  test("a task waiting for room says its place in the line and when it should start; unknown, Computador cheio", async () => {
+  test("a task waiting its turn says one line, with or without a place or an estimate", async () => {
     const { view } = withLine();
     await open(seedState({ taskManager: view }), "task-manager");
     await openAgent("Ada");
     await openAgent("Atlas");
     const checkout = rowOf("Ajustar o texto do checkout");
-    expect(stateOf(checkout)).toEqual(["Na fila · 1º", "começa em ~3 min"]);
+    expect(stateOf(checkout)).toEqual(["Na fila · começa em seguida"]);
     // Grey with the clock: it waits on its computer, not on me.
     expect(checkout.querySelector(".tm-state[data-wait]")).toBeNull();
     expect(checkout.querySelector(".tm-cell--use")?.textContent).toBe("—");
     const report = rowOf("Gerar o relatório");
-    expect(stateOf(report)).toEqual(["Computador cheio", "Começa quando tiver memória livre"]);
+    expect(stateOf(report)).toEqual(["Na fila · começa em seguida"]);
     expect(report.querySelector(".tm-cell--use")?.textContent).toBe("—");
     expect(document.querySelector(".tm-sum")?.textContent).toBe("3 trabalhando1 espera você");
   });
 
-  test("with no estimate, a task in line says no time rather than a made-up one", async () => {
-    const { view } = withLine();
-    const checkout = view.tasks.find((x) => x.runId === "r-checkout");
-    if (checkout?.line) checkout.line.estimatedStartAt = null;
-    await open(seedState({ taskManager: view }), "task-manager");
-    await openAgent("Ada");
-    const row = rowOf("Ajustar o texto do checkout");
-    expect(stateOf(row)).toEqual(["Na fila · 1º", "Começa quando tiver memória livre"]);
-    expect(row.querySelector(".tm-cell--use")?.textContent).toBe("—");
-  });
-
-  test("a computer holding my work is a row of what holds it; Ver fila opens its line in its dialog", async () => {
+  test("a computer with a line is a row of what holds the work; Ver fila opens its line in its dialog", async () => {
     const { view, queue } = withLine();
     view.tasks = view.tasks.filter((x) => x.runId !== "r-report");
     await open(seedState({ taskManager: view }), "task-manager", queue);
@@ -1189,7 +1178,9 @@ describe("a computer's line", () => {
     expect(screen().queryByRole("region", { name: "Computadores" })).toBeNull();
     const list = screen().getByRole("region", { name: "O que segura as tarefas" });
     const rows = [...list.querySelectorAll(".tm-computer__text")].map((r) => r.textContent);
-    expect(rows[0]).toBe("MacBookCheio · 3 na fila · 1 trabalhando");
+    expect(rows).toContain("MacBook3 na fila · 1 trabalhando");
+    // With room and nothing waiting on it, a computer isn't on the page.
+    expect(rows.some((r) => r?.startsWith("Servidor"))).toBe(false);
     // The words take no focus: the keys' focus on Ver fila opens them whole in the kit's tip.
     const see = within(list).getByRole("button", { name: "Ver fila: MacBook" });
     expect(see.getAttribute("title")).toBeNull();
@@ -1198,7 +1189,7 @@ describe("a computer's line", () => {
       see.focus();
     });
     const tip = document.querySelector(".ac-tip.tm-tip") as HTMLElement;
-    expect([...tip.children].map((line) => line.textContent)).toEqual(["MacBook", "Cheio · 3 na fila · 1 trabalhando"]);
+    expect([...tip.children].map((line) => line.textContent)).toEqual(["MacBook", "3 na fila · 1 trabalhando"]);
     await act(async () => see.blur());
     expect(document.querySelector(".ac-tip")).toBeNull();
     await click(see);
@@ -1216,7 +1207,7 @@ describe("a computer's line", () => {
     expect(text).not.toMatch(/US\$|GB/i);
   });
 
-  test("a task's row says nothing of where it runs: its computer's line opens from the strip", async () => {
+  test("a task's row says nothing of where it runs: its computer's line opens from what holds the work", async () => {
     const { view, queue } = withLine();
     await open(seedState({ taskManager: view }), "task-manager", queue);
     await openAgent("Ada");
@@ -1230,7 +1221,7 @@ describe("a computer's line", () => {
     ).toBeTruthy();
   });
 
-  test("in her DM's panel a task in line says its place; Ver fila opens the line over the tasks", async () => {
+  test("in her DM's panel a task in line says the one line; Ver fila opens the line over the tasks", async () => {
     const { view, queue } = withLine();
     await open(withDm({ taskManager: view }), `dm/agent/${ADA_ID}`, queue);
     await click(screen().getByRole("button", { name: "4 tarefas · 1 espera você" }));
@@ -1239,7 +1230,7 @@ describe("a computer's line", () => {
       return cards.find((c) => c.textContent?.includes("Ajustar o texto do checkout")) as HTMLElement;
     };
     const sub = checkout().querySelector(".tm-taskcard__label small");
-    expect(sub?.textContent).toBe("Na fila · 1º · começa em ~3 min · #eng");
+    expect(sub?.textContent).toBe("Na fila · começa em seguida · #eng");
     expect(sub?.hasAttribute("data-wait")).toBe(false);
     await click(within(checkout()).getByRole("button", { name: "Ver fila" }));
     await settle(4);
@@ -1458,7 +1449,7 @@ describe("what holds the waiting work", () => {
     return view;
   };
 
-  test("today's count, then up to three causes, the most held first, each with its count and one way out", async () => {
+  test("today's count, then the causes, the most held first, each with its count and one way out", async () => {
     await openStrip(full());
     // Its heading and how many causes, no "today" line.
     expect(strip()?.querySelector(".ac-grouphead")?.textContent).toBe("O que segura as tarefas3");
@@ -1469,9 +1460,9 @@ describe("what holds the waiting work", () => {
     expect(rows[0]?.[0]).toBe("Plano do Claude no limite");
     expect(rows[0]?.[1]).toMatch(/^Volta .+ · 2 tarefas$/);
     expect(rows[0]?.[2]).toBe("Ver uso");
-    // A full computer with Computadores' whole facts, and not again under Computadores.
-    expect(rows[1]).toEqual(["MacBook", "Cheio · 3 na fila · 1 trabalhando", "Ver fila"]);
-    expect(rows[2]).toEqual(["Servidor", "Cheio · 1 na fila", "Ver fila"]);
+    // Turns in line are no cause, whatever holds them: their computer with a line closes the block, with Ver fila.
+    expect(rows[1]).toEqual(["1 espera você", "Segue quando alguém aprovar", "Abrir na conversa"]);
+    expect(rows[2]).toEqual(["MacBook", "3 na fila · 1 trabalhando", "Ver fila"]);
     expect(screen().queryByRole("region", { name: "Computadores" })).toBeNull();
     // The plan's official mark, never a generic icon.
     expect(strip()?.querySelector(".tm-cause .ac-brand")).not.toBeNull();
@@ -1488,7 +1479,7 @@ describe("what holds the waiting work", () => {
     expect(causes()[0]?.[1]).toBe(`${back} · 2 tarefas`);
   });
 
-  test("two computers, one full in the strip: the other holds nothing of mine and isn't on the page", async () => {
+  test("two computers, one with a line: it joins what holds the work; the other isn't on the page", async () => {
     const view = full();
     view.tasks = view.tasks.filter((x) => x.runId !== "r-report");
     view.computers = [
@@ -1496,7 +1487,7 @@ describe("what holds the waiting work", () => {
       { id: "machine_2", name: "Servidor", working: 1, inLine: 0 },
     ];
     await openStrip(view);
-    expect(causes().map((r) => r[0])).toEqual(["Plano do Claude no limite", "MacBook", "1 espera você"]);
+    expect(causes().map((r) => r[0])).toEqual(["Plano do Claude no limite", "1 espera você", "MacBook"]);
     expect(screen().queryByRole("region", { name: "Computadores" })).toBeNull();
     expect(document.querySelector(".tm")?.textContent).not.toContain("Servidor");
     expect(screen().getAllByRole("button", { name: "Ver fila: MacBook" })).toHaveLength(1);
