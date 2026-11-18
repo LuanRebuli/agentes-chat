@@ -114,7 +114,6 @@ import {
   RunKey,
   RunLane,
   RunMark,
-  RunStrip,
   SavedNote,
   SearchField,
   Segmented,
@@ -257,19 +256,6 @@ function useOpenWidget() {
       search: { widget: widget.id },
     });
 }
-
-const targetIcon = (target: RoutineTarget): IconName =>
-  target.type === "dm"
-    ? "message"
-    : target.type === "conversation"
-      ? target.threadId
-        ? "reply"
-        : "channel"
-      : target.type === "artifact"
-        ? "file"
-        : target.type === "widget"
-          ? "grid"
-          : "channel";
 
 /** The agent's look for the pixel pieces (color and eyes). */
 function useLook() {
@@ -774,6 +760,16 @@ function FixButton({ routine: r, fix, size = "sm" }: { routine: Routine; fix: Ro
   );
 }
 
+/** The trigger's icon: a widget's grid, a reminder's bell, a schedule's repeat. */
+function triggerIcon(r: Routine, widget: boolean, reminder: boolean): IconName {
+  if (widget) return "grid";
+  if (r.trigger.type === "event") return "bolt";
+  if (r.trigger.type === "email" || r.trigger.type === "connector") return "mail";
+  if (r.trigger.type === "webhook") return "link";
+  if (r.trigger.type === "once") return reminder ? "bell" : "calendar";
+  return "repeat";
+}
+
 function RoutineRow({
   routine: r,
   now,
@@ -793,12 +789,9 @@ function RoutineRow({
   const controls = useRoutineControls(r);
   const action = controls.action;
   const [deleting, setDeleting] = useState(false);
-  const target = useTargetLabel();
   const openWidget = useOpenWidget();
   const when = useWhen();
   const nextText = useNextText();
-  const words = useRunWords();
-  const look = useLook()(r.agentId);
   const agent = { type: "agent" as const, id: r.agentId };
   const widget = isWidgetRoutine(r) ? r.widget : null;
   // A widget's routine reads as its widget (ADR 0135 §4).
@@ -914,32 +907,30 @@ function RoutineRow({
         onOpen();
       }}
     >
-      <span className="routine-row__who">{actors.avatar(agent, "sm")}</span>
+      <span className="routine-row__who">
+        {actors.avatar(agent, "sm")}
+        {/* Its agent, for a screen reader: the face says it to the eye. */}
+        <span className="ac-visually-hidden">{actors.name(agent)}</span>
+      </span>
       <div className="routine-row__main">
         <button type="button" className="routine-row__title" title={title} aria-expanded={selected} onClick={onOpen}>
           {title}
         </button>
+        {/* Two lines: its name, then when it runs and the next run. Chips only for trouble; where it delivers and its
+            recent runs are in the details the row opens. */}
         <span className="routine-row__sub">
           <span className="routine-row__to ac-iconline">
-            <Icon name={targetIcon(r.target)} size={14} />
+            <Icon name={triggerIcon(r, Boolean(widget), reminder)} size={14} />
             <span>
-              {widget
-                ? t("routines.widgetLine", { agent: actors.name(agent) })
-                : r.target.type === "conversation"
-                  ? t("routines.deliversIn", { agent: actors.name(agent), place: target(r.target) })
-                  : t("routines.deliversTo", { agent: actors.name(agent), target: target(r.target) })}
+              <span>{when(r)}</span>
+              {nextText(r, now) && (
+                <>
+                  {" · "}
+                  <span className={cx(running && "is-live")}>{nextText(r, now)}</span>
+                </>
+              )}
             </span>
           </span>
-          {widget && (
-            <Chip icon="grid" className="routine-row__chip">
-              {t("routines.widgetChip")}
-            </Chip>
-          )}
-          {reminder && (
-            <Chip icon="bell" className="routine-row__chip">
-              {t("routines.reminder")}
-            </Chip>
-          )}
           {mailTrouble(r) && (
             <Chip icon="alert" tone="waiting" className="routine-row__chip">
               {t(mailTrouble(r) === "error" ? "mail.routine.error" : "mail.routine.needsReconnect")}
@@ -948,36 +939,6 @@ function RoutineRow({
           {showState && <RoutineStateChip routine={r} className="routine-row__chip" />}
           {fix && fix !== "resume" && <FixButton routine={r} fix={fix} />}
         </span>
-      </div>
-      <div className="routine-row__when ac-mediarow ac-mediarow--row">
-        <span className="ac-mediarow__face routine-row__when-icon" aria-hidden="true">
-          <Icon
-            name={
-              r.trigger.type === "event"
-                ? "bolt"
-                : r.trigger.type === "email" || r.trigger.type === "connector"
-                  ? "mail"
-                  : r.trigger.type === "webhook"
-                    ? "link"
-                    : r.trigger.type === "once"
-                      ? reminder
-                        ? "bell"
-                        : "calendar"
-                      : "repeat"
-            }
-            size={16}
-          />
-        </span>
-        <span className="ac-mediarow__head routine-row__when-text">
-          <b>{when(r)}</b>
-        </span>
-        <span className="ac-mediarow__body routine-row__when-text">
-          <small className={cx(running && "is-live")}>{nextText(r, now)}</small>
-        </span>
-      </div>
-      <div className="routine-row__runs" role="img" aria-label={words.label(r)}>
-        <RunStrip runs={runPixels(r.recentRuns)} color={look.color} slots={RUN_SLOTS} running={running} />
-        <small>{words.caption(r, now)}</small>
       </div>
       <div className="routine-row__actions">
         {fired || !r.canManage ? (
@@ -1757,7 +1718,8 @@ function RoutineWeek({ routine: r, runs, now }: { routine: Routine; runs: Routin
     <div className="routine-week">
       <span className="routine-week__text">
         <b>{first ? say(first) : t("routines.health.none")}</b>
-        {rest.length > 0 && <span className="small muted">{rest.map(say).join(" · ")}</span>}
+        {/* The last run's line ("Parada há 5 min") lives here, out of the list's rows. */}
+        <span className="small muted">{[words.caption(r, now), ...rest.map(say)].filter(Boolean).join(" · ")}</span>
       </span>
       <span className="routine-week__days" role="img" aria-label={words.label(r)}>
         {days.map((d) => (

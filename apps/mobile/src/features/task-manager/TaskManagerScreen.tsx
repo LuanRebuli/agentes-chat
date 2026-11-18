@@ -13,8 +13,6 @@ import {
   type AgentTasks,
   agentSummary,
   causeWords,
-  computerRoomText,
-  computersBesides,
   endedState,
   endedText,
   groupLead,
@@ -102,8 +100,8 @@ function useRowMotion() {
  * ("2 trabalhando · 1 espera você"). The tasks people asked for, by agent (its row says how its tasks stand and is
  * one tap: folded until opened), each a row with its state as a mark (the orbit while it runs, amber while it waits on
  * you), its time and a chevron: stopping is done on the task's own screen, never from a button in the list. Then the
- * routines' work in the background and what ended today. Above them, the computers with work, each opening its line
- * in a sheet. Every row is one line that ends in "…": a task's own screen says it whole, a return's sheet its words.
+ * routines' work in the background and what ended today. Above them, while something waits, what holds it (a full
+ * computer opens its line in a sheet). Every row is one line that ends in "…": a task's own screen says it whole, a return's sheet its words.
  */
 export function TaskManagerScreen() {
   return (
@@ -117,7 +115,7 @@ function TaskManager() {
   const { t } = useTranslation();
   const look = useEmptyLook();
   const meId = useMeId();
-  const tasks = useTasksToday({ doneToday: true });
+  const tasks = useTasksToday();
   const pull = usePullRefresh(tasks.refetch);
   const now = useNow(1000);
   // Tasks being stopped from their screens read "Parando…" here too.
@@ -170,8 +168,6 @@ function TaskManager() {
   const delegatedCount = delegated.reduce((n, g) => n + g.tasks.length, 0);
   const computers = view?.computers ?? [];
   const causes = shownCauses(all);
-  const listed = computersBesides(computers, causes);
-  const done = view?.doneToday ?? ended.filter((e) => e.status === "done").length;
   return (
     <PushedLargeTitle
       title={t("taskManager.title")}
@@ -191,12 +187,7 @@ function TaskManager() {
             </Text>
             {causes.length > 0 ? (
               <Animated.View {...fade} layout={layout}>
-                <Text variant="footnote" tone="muted" style={styles.today}>
-                  {t("taskManager.capacity.today", {
-                    count: done,
-                    waiting: all.filter((x) => taskState(x) === "waiting").length,
-                  })}
-                </Text>
+                <SectionHeader title={t("taskManager.capacity.label")} count={causes.length} />
                 {causes.map((cause, i) => (
                   <CauseRow key={cause.key} cause={cause} computers={computers} divider={i > 0} />
                 ))}
@@ -215,16 +206,6 @@ function TaskManager() {
               <Text variant="footnote" tone="faint" style={styles.none}>
                 {t("taskManager.hiddenLine", { count: hidden })}
               </Text>
-            ) : null}
-            {listed.length > 0 ? (
-              <Animated.View {...fade} layout={layout}>
-                <SectionHeader title={t("taskManager.queue.computers")} count={listed.length} />
-                {listed.map((m, i) => (
-                  <Animated.View key={m.id} {...fade} layout={layout}>
-                    <ComputerRow computer={m} divider={i > 0} />
-                  </Animated.View>
-                ))}
-              </Animated.View>
             ) : null}
             {groups.length > 0 ? (
               <Animated.View {...fade} layout={layout}>
@@ -512,34 +493,6 @@ function CauseRow({ cause, computers, divider }: { cause: WaitCause; computers: 
 }
 
 /**
- * A computer with work (ADR 0128): its name, whether it has room or how many wait for it, how many run there now. It
- * opens its line (`QueueSheet`).
- */
-function ComputerRow({ computer, divider }: { computer: ComputerSummary; divider: boolean }) {
-  const { t } = useTranslation();
-  const c = useColors();
-  const kind = useComputerKind(useOrgId(), computer.id);
-  const openQueue = useOpenQueue();
-  const line = computerRoomText(t, computer);
-  return (
-    <RowPressable
-      hold
-      onPress={() => openQueue(computer.id)}
-      accessibilityRole="button"
-      accessibilityLabel={`${computer.name}, ${line}`}
-      style={styles.task}
-    >
-      {divider ? <View style={[styles.divider, styles.textDivider, { backgroundColor: c.line2 }]} /> : null}
-      <Tile size={LEAD}>
-        <ComputerIcon kind={kind} size={16} color={c.muted} />
-      </Tile>
-      <OneLine title={computer.name} line={line} variant="subhead" />
-      <Disclosure />
-    </RowPressable>
-  );
-}
-
-/**
  * One that ended today, one line: its agent's face, its title and where, how it ended as a mark (in words on its
  * screen) and when. It opens its screen too.
  */
@@ -748,7 +701,6 @@ const GAP = "  ";
 const styles = StyleSheet.create({
   // Under the large title's words, as Equipe's line.
   summary: { paddingHorizontal: SCREEN_X, marginTop: -4, paddingBottom: 4 },
-  today: { paddingHorizontal: SCREEN_X, paddingTop: 8 },
   // One line each: the touch rows' 12 above and below it, the lead (28) at most as tall as that.
   agent: {
     flexDirection: "row",
