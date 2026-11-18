@@ -3905,6 +3905,8 @@ export interface Artifact {
    * Drive itself (ADR 0157, amendment 2026-11-17), and I made it or I'm an administrator.
    */
   canShare?: boolean;
+  /** The Drive folder it is in; null = the top level. Absent from an older server. */
+  folderId?: string | null;
   /** A live file's conversation (ADR 0199), once someone opened or wrote in it; null until then and for other kinds. */
   conversation?: FileConversation | null;
 }
@@ -3930,6 +3932,17 @@ export interface UnreadFile {
   /** Replies I haven't read: every one where I follow the conversation, else only those that mention me. */
   unread: number;
   mentions: number;
+}
+
+/** A Drive folder: every one in the workspace sees it; a file in it keeps its own visibility. */
+export interface DriveFolder {
+  id: string;
+  name: string;
+  /** Null: at the Drive's top level. */
+  parentId: string | null;
+  createdBy: ArtifactAuthor;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /**
@@ -4010,6 +4023,8 @@ export interface ArtifactFilters {
   who?: "agents" | "people";
   /** Newest update first (default), by name, or by kind. */
   sort?: "recent" | "name" | "kind";
+  /** In this Drive folder; null = the top level; absent = anywhere. */
+  folderId?: string | null;
 }
 
 /** A page of the Drive: the next one starts at `nextCursor`; the first also counts the files per kind. */
@@ -5240,8 +5255,6 @@ export interface QueueWaiting extends QueueAccess {
   estimatedStartAt: string | null;
   /** Who it waits for: for the head, the running turn expected to end first; behind it, the agents ahead in line. */
   after: string[];
-  /** The Claude plan sign-in it waits for, by its label (it works on all the runs it takes at once); null: room. */
-  signIn?: string | null;
 }
 
 /** `GET …/machines/{machineId}/queue`: a computer's line; `computer.queue` org events say it changed. */
