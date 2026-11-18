@@ -108,3 +108,9 @@ Run lint, typecheck, tests and boundaries before declaring work done.
 - Test helpers: `packages/db/test/pglite.ts`, `packages/engine/test/fixtures.ts`, `apps/server/test/harness.ts`.
 - Frontend: `apps/web` and `packages/ui`; the server serves the built SPA from `WEB_DIR`. Every UI change follows `.claude/skills/ui-polish` (the kit's numbers, the rules and the routine), with the break-ui skill on worst-case data and Impeccable's audit (report only; its shared ignores in `.impeccable/config.json`).
 - Who has access to something: `AccessDialog` (`packages/ui`) on the web and desktop, `AccessList` (`apps/mobile/src/features/shared`) on the phone. They know nothing of what they guard: reuse them for any new "who can see or edit this" instead of drawing another list.
+
+## Verification
+
+- Before declaring work done or opening a PR, follow `.claude/skills/verify/SKILL.md` (real boot over HTTP, the gate, the stamp line); `REVIEW.md` is what reviewers look for.
+- After 3 failed fix rounds on the same problem, stop and ask the human; a flaky test is fixed at its root or deleted with the reason, never skipped, retried or slept on.
+- The agent never edits the checks that judge its own change (`.github/`, `scripts/ci-local.sh`, `.claude/`, `REVIEW.md`, `CLAUDE.md`) in the same change as its work (`docs/verification.md`).

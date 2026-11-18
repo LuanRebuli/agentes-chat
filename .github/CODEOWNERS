@@ -1,0 +1,6 @@
+# Files that judge a change are owned by the owner, so a change cannot quietly edit its own checks.
+/.github/              @LuanRebuli
+/scripts/ci-local.sh   @LuanRebuli
+/.claude/              @LuanRebuli
+/REVIEW.md             @LuanRebuli
+/CLAUDE.md             @LuanRebuli
