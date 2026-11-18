@@ -14,6 +14,7 @@ export const ptBR = {
   },
   common: {
     close: "Fechar",
+    details: "Detalhes",
     joinSentences: "{{a}} {{b}}",
     cantUndo: "Não dá para desfazer.",
     removeName: "Remover {{name}}",
@@ -17795,8 +17796,7 @@ export const ptBR = {
       routines: "Rotinas",
     },
     hint: {
-      handoffs:
-        "A maior parte do uso desta semana veio de agentes passando trabalho uns aos outros. Para trabalhos longos, peça direto ao agente.",
+      handoffs: "A maior parte veio de repasses entre agentes.",
       message: "Mandar mensagem para {{name}}",
     },
   },

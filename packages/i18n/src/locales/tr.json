@@ -5,6 +5,7 @@
   },
   "common": {
     "close": "Kapat",
+    "details": "Ayrıntılar",
     "joinSentences": "{{a}} {{b}}",
     "cantUndo": "Bu işlem geri alınamaz.",
     "removeName": "Kaldır: {{name}}",
@@ -17466,7 +17467,7 @@
       "routines": "Rutinler"
     },
     "hint": {
-      "handoffs": "Bu haftaki kullanımın çoğu, ajanların birbirine iş devretmesinden geldi. Uzun işler için doğrudan ajana sorun.",
+      "handoffs": "Çoğu ajanlar arası devirlerden geldi.",
       "message": "{{name}} ile mesajlaş"
     }
   },

@@ -5,6 +5,7 @@
   },
   "common": {
     "close": "Schließen",
+    "details": "Details",
     "joinSentences": "{{a}} {{b}}",
     "cantUndo": "Das lässt sich nicht rückgängig machen.",
     "removeName": "{{name}} entfernen",
@@ -17531,7 +17532,7 @@
       "routines": "Routinen"
     },
     "hint": {
-      "handoffs": "Der Großteil der Nutzung dieser Woche kam von Agenten, die einander Arbeit übergeben. Für lange Aufgaben frag den Agenten direkt.",
+      "handoffs": "Der Großteil kam von Übergaben zwischen Agenten.",
       "message": "{{name}} schreiben"
     }
   },

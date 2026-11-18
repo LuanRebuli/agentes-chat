@@ -5,6 +5,7 @@
   },
   "common": {
     "close": "닫기",
+    "details": "세부 정보",
     "joinSentences": "{{a}} {{b}}",
     "cantUndo": "되돌릴 수 없어요.",
     "removeName": "{{name}} 삭제",
@@ -16930,7 +16931,7 @@
       "routines": "루틴"
     },
     "hint": {
-      "handoffs": "이번 주 사용량의 대부분은 에이전트끼리 작업을 넘긴 데서 나왔습니다. 긴 작업은 에이전트에게 직접 요청하세요.",
+      "handoffs": "대부분 에이전트 간 인계에서 나왔어요.",
       "message": "{{name}}에게 메시지"
     }
   },

@@ -298,26 +298,28 @@ describe("a plan account on the phone (IA e uso › Contas): a row that pushes i
     expect(screen).not.toContain("function AgentShares(");
   });
 
-  test("its screen: bars split by agent, the month, each agent a row to its usage, then the way to the AI accounts screen", () => {
+  test("its screen: the bars, one Detalhes row that opens the agents and the month in place, then the way to the AI accounts screen", () => {
     expect(
-      ascending(
-        at(detail, ["brandOf(account)", "usage={splitUsage(", "{tokens}", 't("shell.agents")', "mobile.ai.row"]),
-      ),
+      ascending(at(detail, ['t("common.details")', "{details ? (", 't("shell.agents")', "{tokens}", "mobile.ai.row"])),
     ).toBe(true);
+    // Split by agent only while Detalhes shows the agents that explain the colours.
+    expect(detail).toMatch(/details\s+\? splitUsage\(/);
     // The title says the account: the meter doesn't say where the plan stands again.
     expect(detail).toMatch(/<PlanMeter\s+plain/);
     expect(detail).toContain('t("usageViews.monthTokens", {');
+    // The logo names the maker: no line saying it again.
+    expect(detail).not.toContain("brandOf(");
     // Only its owner manages it, on the AI accounts screen.
     expect(detail).toContain("account.mine && account.accountId ?");
-    // Every agent, nothing folded, each one's facts on its row and the row to its own usage.
+    // Every agent, nothing folded, its share as the row's value, its tokens under its name, the row to its own usage.
     expect(detail).toContain("const agents = [...shares.shown, ...shares.rest];");
     expect(detail).not.toContain("usageViews.moreAgents");
-    expect(detail).toContain("shareFacts(t, i18n.language, window, a)");
+    expect(detail).toContain("shareCells(t, i18n.language, window, a)");
     expect(detail).toMatch(/onPress=\{\(\) => router\.push\(`\/agent-usage\/\$\{a\.agentId\}`/);
-    // The renewal moves under the list, once.
+    // Without an account's list inside, each window says when it renews under its bar; the age only once it matters.
     const parts = source("../usage/parts.tsx");
     expect(
-      ascending(at(parts, ["!children ? (", "{children}\n      {children && renews ?", "text.updated(usage.at)"])),
+      ascending(at(parts, ["!children ? (", "{children}\n      {children && renews ?", "planAgeShown(usage, now)"])),
     ).toBe(true);
   });
 

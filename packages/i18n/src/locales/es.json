@@ -5,6 +5,7 @@
   },
   "common": {
     "close": "Cerrar",
+    "details": "Detalles",
     "joinSentences": "{{a}} {{b}}",
     "cantUndo": "No se puede deshacer.",
     "removeName": "Quitar a {{name}}",
@@ -18015,7 +18016,7 @@
       "routines": "Rutinas"
     },
     "hint": {
-      "handoffs": "La mayor parte del uso de esta semana vino de agentes que se pasan trabajo entre sí. Para trabajos largos, pídeselo directamente al agente.",
+      "handoffs": "La mayor parte vino de traspasos entre agentes.",
       "message": "Escribir a {{name}}"
     }
   },
