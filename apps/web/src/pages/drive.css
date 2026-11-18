@@ -223,14 +223,16 @@ html:not([data-pointer]) .drive-row:has(.drive-hit:focus-visible) {
 }
 .drive-row__name {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-3);
   min-width: 0;
 }
-/* A folder's or a file's icon: one 20 box in both rows, so their names start on one line. */
+/* A folder's or a file's icon: one 20 box in both rows, so their names start on one line. `.ac-iconline` centres it
+   on the title's capitals: in the title's size, so its `lh` is the title's line. */
 .drive-row__icon {
   display: inline-flex;
   flex: none;
+  font-size: 14px;
   color: var(--muted);
 }
 .drive-row__text {

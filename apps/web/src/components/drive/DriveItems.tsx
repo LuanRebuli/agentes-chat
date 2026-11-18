@@ -181,7 +181,7 @@ export function DriveRow({
           onClick={(e) => shiftRange(e, a, onPick)}
           aria-label={t("drive.select", { title: a.title })}
         />
-        <span className="drive-row__name">
+        <span className="drive-row__name ac-iconline">
           <span className="drive-row__icon" aria-hidden="true">
             <Icon name={itemIcon(a)} size={20} />
           </span>

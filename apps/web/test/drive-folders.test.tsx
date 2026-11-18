@@ -231,7 +231,7 @@ describe("Drive list", () => {
     for (const row of rows) {
       const [check, name] = Array.from(row.children);
       expect(check?.getAttribute("role")).toBe("checkbox");
-      expect(name?.className).toBe("drive-row__name");
+      expect(name?.classList.contains("drive-row__name")).toBe(true);
       const [icon, text] = Array.from(name?.children ?? []);
       expect(icon?.className).toBe("drive-row__icon");
       expect(icon?.querySelector("svg")).toBeTruthy();

@@ -544,7 +544,7 @@ export function FolderRow(props: FolderItemProps) {
       {...folderMenu(t, props)}
     >
       <FolderCheck {...props} />
-      <span className="drive-row__name">
+      <span className="drive-row__name ac-iconline">
         <span className="drive-row__icon" aria-hidden="true">
           <Icon name="drive" size={20} />
         </span>

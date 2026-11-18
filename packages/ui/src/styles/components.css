@@ -11173,6 +11173,13 @@ html:not([data-pointer]) .ac-optlist--list .ac-optrow:focus-visible {
   margin-inline-end: calc(-1 * var(--space-3));
   background: linear-gradient(var(--line2), var(--line2)) center / 1px 100% no-repeat;
 }
+/* Phone width: 12 per level, the hairline still under the parent's icon (8 in), so deep trees keep room for words. */
+@media (max-width: 640px) {
+  .ac-optrow__guide {
+    width: var(--space-3);
+    background-position: var(--space-2) 0;
+  }
+}
 /*
  * Attached: the chosen row and its settings are one card. The row on top, a hairline, then the settings
  * full width from the card's edge. The card's border is the chosen one's.
