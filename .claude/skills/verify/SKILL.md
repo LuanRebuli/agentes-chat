@@ -11,7 +11,7 @@ A passing unit test says little; a real boot driven end to end says a lot. Run t
 
 `bun run verify:boot` (`scripts/verify-boot.sh`, needs bun and curl, no `.env`, no Docker). It starts `apps/server/src/main.ts` with `DATABASE_URL=pglite://<temp folder>` (the database built into the server, deleted on exit; never a real or production URL), then checks and prints PASS per step: `/api/health`, first sign-up, creating a workspace, posting a message in its general channel, reading it back. On failure it prints the server log tail and exits 1.
 
-- Windows: bun's install of the phone app's dependencies fails there, so boot in a Linux checkout (WSL or CI). In WSL: `bun install --frozen-lockfile --backend=copyfile`, then `bun run verify:boot`. Use one WSL call per need; repeated root-user calls have coincided with Docker restarts.
+- Windows: bun install fails on the phone app's dependencies, so boot in a Linux checkout (WSL or CI). Tested path in WSL (bun from bun.sh, one call per need): `git clone -b luan/main <fork> ~/w`, then in the clone only (never commit it) change `"apps/*"` in the root `package.json` workspaces to `"apps/server", "apps/web"` and run `bun install --backend=copyfile`; first boot takes about 90 s. If boot says `Cannot find module '@electric-sql/pglite'`, the install cache holds empty files after an interrupted install: `rm -rf node_modules */*/node_modules ~/.bun/install/cache` and install again. Do not `pkill -f "bun install"` from a `bash -lc` that contains that text.
 - Evidence to keep: the PASS lines and the exit code.
 
 ## 2. An agent answers (fake provider)
