@@ -958,7 +958,14 @@ function AgentCard({
   // A filter chip: the face, the name and how many tasks, the waiting mark when one waits on a person.
   return (
     <span className={cx("ac-filter tm-chip", pressed && "ac-filter--active")}>
-      <button type="button" className="ac-filter__trigger" aria-pressed={pressed} aria-label={label} onClick={onPress}>
+      <button
+        type="button"
+        className="ac-filter__trigger"
+        aria-pressed={pressed}
+        aria-label={label}
+        title={name}
+        onClick={onPress}
+      >
         {agentId && <AgentAvatar agentId={agentId} name={name} size="xs" />}
         <span className="ac-filter__text">{name}</span>
         <span className="tm-chip__n ac-num">{count}</span>
