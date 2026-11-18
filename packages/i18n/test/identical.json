@@ -3164,6 +3164,9 @@
       "storage.connect.provider.b2"
     ],
     "id": [
+      "drive.folder",
+      "drive.folders",
+      "drive.moveTo",
       "artifacts.kind.spreadsheet",
       "live.kinds.spreadsheet",
       "live.slides.chart.item",
@@ -3700,6 +3703,7 @@
       "onboarding.import.choose.step.video"
     ],
     "pl": [
+      "drive.folder",
       "devices.cpus",
       "devices.memory",
       "devices.system.android",

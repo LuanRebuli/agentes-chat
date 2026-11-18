@@ -1,4 +1,5 @@
 import { isLiveFileKind, LIVE_PRESENCE_BATCH, useArtifacts, useLivePresence } from "@agenteschat/client";
+import { folderChildren, folderTrail } from "@agenteschat/client/lib/drive";
 import { can } from "@agenteschat/client/lib/permissions";
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -22,7 +23,9 @@ import { chooseAction } from "../settings/parts";
 import { FirstUse, LoadFailed } from "../shared/FirstUse";
 import { useOrgId, usePullRefresh, useWhen } from "../shared/hooks";
 import { PushedLargeTitle } from "../shared/PushedLargeTitle";
+import { SheetHostProvider } from "../shared/SheetHost";
 import { DriveCard, driveRef, UploadingCard } from "./DriveCard";
+import { FolderPath, FolderRows, useFolderActions } from "./folders";
 import {
   DRIVE_TYPES,
   type DriveDaySection,
@@ -51,7 +54,19 @@ const PAGE = 24;
  * next pages by itself until it has a page of them to show or the server has no more (`keepsLooking`), the rows'
  * shape on screen while it finds none yet.
  */
-export function DriveScreen({ highlightId = null }: { highlightId?: string | null }) {
+export function DriveScreen(props: { highlightId?: string | null; folderId?: string | null }) {
+  return (
+    <SheetHostProvider>
+      <DriveBody {...props} />
+    </SheetHostProvider>
+  );
+}
+
+/**
+ * A folder (`folderId`, null = the top level) shows its folders, then its files; a search or a type looks through the
+ * whole Drive, as on the web.
+ */
+function DriveBody({ highlightId = null, folderId = null }: { highlightId?: string | null; folderId?: string | null }) {
   const { t } = useTranslation();
   const orgId = useOrgId();
   const when = useWhen();
@@ -59,7 +74,15 @@ export function DriveScreen({ highlightId = null }: { highlightId?: string | nul
   const [type, setType] = useState<DriveType>("all");
   const [shown, setShown] = useState(PAGE);
   const search = useDeferredValue(q.trim());
-  const filters = useMemo(() => driveFilters(search, type), [search, type]);
+  const browsing = search === "" && type === "all";
+  const filters = useMemo(
+    () => ({ ...driveFilters(search, type), ...(browsing ? { folderId } : {}) }),
+    [search, type, browsing, folderId],
+  );
+  const arrange = useFolderActions();
+  const trail = folderTrail(arrange.folders, folderId);
+  const here = trail.at(-1) ?? null;
+  const subfolders = browsing ? (folderChildren(arrange.folders).get(folderId ?? "") ?? []) : [];
   const list = useArtifacts(orgId, filters);
   const pull = usePullRefresh(list.refetch);
   const matches = useMemo(() => (list.artifacts ?? []).filter((a) => matchesType(a, type)), [list.artifacts, type]);
@@ -103,7 +126,7 @@ export function DriveScreen({ highlightId = null }: { highlightId?: string | nul
           .replace(/^./, (x) => x.toLocaleUpperCase())
       : t(`mobile.drive.section.${s.label.kind}`);
   const mayUpload = can(useOrg().org, "upload_files");
-  const uploader = useDriveUpload(list.refetch);
+  const uploader = useDriveUpload(list.refetch, folderId);
   const maker = useCreateLive();
   const newItems: HeaderMenuItem[] = [
     ...LIVE_KINDS_MADE.map((kind) => ({
@@ -112,6 +135,7 @@ export function DriveScreen({ highlightId = null }: { highlightId?: string | nul
       label: t(`live.kinds.${kind}`),
       onPress: () => void maker.make(kind),
     })),
+    { icon: "drive", sf: "folder.badge.plus", label: t("drive.newFolder"), onPress: () => arrange.newFolder(folderId) },
     { icon: "share", sf: "square.and.arrow.up", label: t("files.upload"), onPress: uploader.pick },
   ];
   const clear = () => {
@@ -135,7 +159,7 @@ export function DriveScreen({ highlightId = null }: { highlightId?: string | nul
   const fade = reduced ? {} : { entering: FadeIn.duration(160), exiting: FadeOut.duration(120) };
   return (
     <PushedLargeTitle
-      title={t("mobile.drive.title")}
+      title={here?.name ?? t("mobile.drive.title")}
       {...(mayUpload
         ? {
             actions: [
@@ -153,6 +177,7 @@ export function DriveScreen({ highlightId = null }: { highlightId?: string | nul
         : {})}
       refreshControl={<RefreshControl refreshing={pull.refreshing} onRefresh={pull.onRefresh} />}
     >
+      {here ? <FolderPath trail={trail} /> : null}
       <View style={styles.search}>
         <SearchField
           value={q}
@@ -170,6 +195,7 @@ export function DriveScreen({ highlightId = null }: { highlightId?: string | nul
           setShown(PAGE);
         }}
       />
+      <FolderRows folders={subfolders} onMenu={mayUpload ? arrange.folderMenu : null} />
       {view === "loading" ? (
         // Loading, or still looking for files of the type: the rows' own shape, never a spinner.
         <SkeletonList rows={4} />
@@ -181,6 +207,18 @@ export function DriveScreen({ highlightId = null }: { highlightId?: string | nul
           title={t("mobile.drive.noResults")}
           action={<Button variant="secondary" size="sm" label={t("filters.clearAll")} onPress={clear} />}
         />
+      ) : view === "empty" && (folderId || subfolders.length > 0) ? (
+        subfolders.length > 0 ? null : (
+          <EmptyState
+            size="inline"
+            title={t("drive.folderEmptyTitle")}
+            action={
+              mayUpload ? (
+                <Button variant="secondary" size="sm" label={t("files.upload")} onPress={uploader.pick} />
+              ) : undefined
+            }
+          />
+        )
       ) : view === "empty" ? (
         <FirstUse
           place="drive"
@@ -211,6 +249,7 @@ export function DriveScreen({ highlightId = null }: { highlightId?: string | nul
                           artifact={a}
                           highlighted={a.id === highlightId}
                           siblings={shownRefs}
+                          {...(mayUpload ? { onLongPress: arrange.fileMenu } : {})}
                           present={presence.data?.[a.id]}
                         />
                       ))}
