@@ -499,6 +499,18 @@ html:not([data-pointer]) .plan-row__place--grip:focus-visible {
 .plan-shares__row:hover b {
   text-decoration: underline;
 }
+/* A narrow row: the tokens go under the name, so the name keeps its words whole beside its share. */
+@media (max-width: 480px) {
+  .plan-group {
+    grid-template-columns: 20px minmax(0, 1fr) auto;
+  }
+  .plan-shares__tokens {
+    grid-column: 2 / -1;
+    grid-row: 2;
+    padding-inline-start: 0;
+    text-align: start;
+  }
+}
 .plan-kinds__icon {
   display: inline-flex;
   justify-content: center;
