@@ -14,6 +14,7 @@ export const en = {
   },
   common: {
     close: "Close",
+    details: "Details",
     joinSentences: "{{a}} {{b}}",
     cantUndo: "This can't be undone.",
     removeName: "Remove {{name}}",
@@ -17937,8 +17938,7 @@ export const en = {
     },
     hint: {
       /** Shown when handoffs led the week's use; followed by the `message` link. */
-      handoffs:
-        "Most of this week's use came from agents handing work to each other. Ask the agent directly for long work.",
+      handoffs: "Most of it came from handoffs between agents.",
       /** Opens the DM with the agent that took most of the handed work. */
       message: "Message {{name}}",
     },

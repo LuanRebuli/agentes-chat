@@ -5,6 +5,7 @@
   },
   "common": {
     "close": "Chiudi",
+    "details": "Dettagli",
     "joinSentences": "{{a}} {{b}}",
     "cantUndo": "Non si può annullare.",
     "removeName": "Rimuovi {{name}}",
@@ -18107,7 +18108,7 @@
       "routines": "Routine"
     },
     "hint": {
-      "handoffs": "Gran parte dell’uso di questa settimana viene da agenti che si passano il lavoro. Per i lavori lunghi, chiedi direttamente all’agente.",
+      "handoffs": "La maggior parte è venuta da passaggi tra agenti.",
       "message": "Scrivi a {{name}}"
     }
   },

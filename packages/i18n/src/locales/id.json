@@ -5,6 +5,7 @@
   },
   "common": {
     "close": "Tutup",
+    "details": "Detail",
     "joinSentences": "{{a}} {{b}}",
     "cantUndo": "Ini tidak bisa diurungkan.",
     "removeName": "Hapus {{name}}",
@@ -16992,7 +16993,7 @@
       "routines": "Rutinitas"
     },
     "hint": {
-      "handoffs": "Sebagian besar penggunaan minggu ini berasal dari agen yang saling menyerahkan pekerjaan. Untuk pekerjaan panjang, minta langsung ke agennya.",
+      "handoffs": "Sebagian besar berasal dari serah terima antaragen.",
       "message": "Kirim pesan ke {{name}}"
     }
   },

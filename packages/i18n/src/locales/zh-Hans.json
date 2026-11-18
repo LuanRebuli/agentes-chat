@@ -5,6 +5,7 @@
   },
   "common": {
     "close": "关闭",
+    "details": "详情",
     "joinSentences": "{{a}}{{b}}",
     "cantUndo": "此操作无法撤销。",
     "removeName": "移除 {{name}}",
@@ -17008,7 +17009,7 @@
       "routines": "例行任务"
     },
     "hint": {
-      "handoffs": "本周的大部分用量来自智能体之间互相交接工作。长任务请直接交给该智能体。",
+      "handoffs": "大部分来自智能体之间的交接。",
       "message": "给 {{name}} 发消息"
     }
   },

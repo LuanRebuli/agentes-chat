@@ -5,6 +5,7 @@
   },
   "common": {
     "close": "Fermer",
+    "details": "Détails",
     "joinSentences": "{{a}} {{b}}",
     "cantUndo": "Cette action est définitive.",
     "removeName": "Retirer {{name}}",
@@ -18091,7 +18092,7 @@
       "routines": "Routines"
     },
     "hint": {
-      "handoffs": "Cette semaine, l’essentiel de l’utilisation vient d’agents qui se transmettent du travail. Pour un travail long, demandez directement à l’agent.",
+      "handoffs": "La plupart vient de transmissions entre agents.",
       "message": "Écrire à {{name}}"
     }
   },

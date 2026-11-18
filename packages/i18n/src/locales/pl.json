@@ -5,6 +5,7 @@
   },
   "common": {
     "close": "Zamknij",
+    "details": "Szczegóły",
     "joinSentences": "{{a}} {{b}}",
     "cantUndo": "Tego nie da się cofnąć.",
     "removeName": "Usuń {{name}}",
@@ -18662,7 +18663,7 @@
       "routines": "Rutyny"
     },
     "hint": {
-      "handoffs": "Większość użycia w tym tygodniu pochodziła z agentów przekazujących sobie pracę. Długą pracę zlecaj bezpośrednio agentowi.",
+      "handoffs": "Większość pochodziła z przekazań między agentami.",
       "message": "Napisz do: {{name}}"
     }
   },

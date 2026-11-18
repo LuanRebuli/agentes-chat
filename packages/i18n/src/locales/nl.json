@@ -5,6 +5,7 @@
   },
   "common": {
     "close": "Sluiten",
+    "details": "Details",
     "joinSentences": "{{a}} {{b}}",
     "cantUndo": "Dit kan niet ongedaan worden gemaakt.",
     "removeName": "{{name}} verwijderen",
@@ -17600,7 +17601,7 @@
       "routines": "Routines"
     },
     "hint": {
-      "handoffs": "Het meeste gebruik deze week kwam van agents die elkaar werk overdragen. Vraag lang werk rechtstreeks aan de agent.",
+      "handoffs": "Het meeste kwam van overdrachten tussen agents.",
       "message": "Bericht aan {{name}}"
     }
   },
